@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  {% for error in form.errors.values %}
+    {{ error }}
+  {% endfor %}
+  <!-- {{ form.as_p }} -->
+  <div class="mb-3">
+    <label for="Username" class="form-label">User name</label>
+    <input type="text" class="form-control" id="Username"  name="username">
+  </div>
+    <div class="mb-3">
+    <label for="exampleInputPassword1" class="form-label">Password</label>
+    <input type="password" class="form-control" id="exampleInputPassword1" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock content %}
