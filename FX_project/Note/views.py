@@ -1,3 +1,9 @@
 from django.shortcuts import render
 
-# Create your views here.
+def history(request):
+  context = None
+  return render(request, 'Note/history.html', context)
+
+def chart(request):
+  context = None
+  return render(request, 'Note/chart.html', context)
