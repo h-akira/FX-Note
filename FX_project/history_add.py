@@ -10,6 +10,7 @@ import numpy
 import pandas as pd
 from pytz import timezone
 import lib.history as his
+from lib.language import Dictionary
 import django
 
 def parse_args():
@@ -28,20 +29,7 @@ def parse_args():
   return options
 
 def jp2en(d):
-  dic = {
-    "成行":"market",
-    "通常":"normal",
-    "OCO":"OCO",
-    "新規":"new",
-    "決済":"settlement",
-    "買":"buy",
-    "売":"sell",
-    "取消済":"canceled",
-    "受付済":"accepted",
-    "約定済":"executed",
-    "指値":"limit",
-    "逆指値":"stop"
-  }
+  dic = Dictionary.JP2EN
   d["order_type"] = dic[d["order_type"]]
   d["kind"] = dic[d["kind"]]
   d["buy_sell"] = dic[d["buy_sell"]]
@@ -96,7 +84,11 @@ def main():
     d = jp2en(d)
     # テーブルに追加
     obj = HistoryTable(**d)
-    obj.save()
+    try:
+      obj.save()
+    except django.db.utils.IntegrityError:
+      print("skip")
+
 
 if __name__ == '__main__':
   main()
