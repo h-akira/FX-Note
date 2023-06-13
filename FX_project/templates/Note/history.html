@@ -64,6 +64,30 @@
         <td>
           {{ history.order_datetime|date:"Y-m-d H:i:s" }}
         </td>
+        <td>
+          {{ history.order_rate }}
+        </td>
+        <td>
+          {{ history.condition }}
+        </td>
+        <td>
+          {{ history.execution_datetime|date:"Y-m-d H:i:s" }}
+        </td>
+        <td>
+          {{ history.execution_rate|default_if_none:'' }}
+        </td>
+        <td>
+          {% if history.profit >= 0 %}
+          +{{ history.profit|default_if_none:'' }}
+          {% else %}
+          <div class="text-danger">
+          {{ history.profit|default_if_none:'' }}
+          </div>
+          {% endif %}
+        </td>
+        <td>
+          {{ history.swap|default_if_none:'' }}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
