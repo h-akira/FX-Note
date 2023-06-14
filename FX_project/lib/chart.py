@@ -11,7 +11,9 @@ import numpy
 import glob
 import os
 import re
+import io
 import datetime
+import matplotlib.pyplot as plt
 
 def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
   # ディレクトリ構造は以下の通り:
@@ -74,7 +76,7 @@ def add_BBands(df,period=20,nbdev=2,matype=0):
   df['bb_down']=bb_down
   return df
 
-def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None,rule=None, savefig=None,figsize=(2,1)):
+def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None,rule=None, savefig=None,figsize=(2,1),png=False, dpi=200):
   # hlinesとvlinseは辞書型
   # 例: {'hlines':[136.28,136.32],'colors':['g','r'],'linewidths'=[1,1]}
   # savefigも辞書型

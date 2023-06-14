@@ -1,5 +1,13 @@
 from django.shortcuts import render
 from .models import HistoryTable
+from django.http import HttpResponse
+import sys
+import os
+import tempfile
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import lib.chart as cha
+import matplotlib.pyplot as plt
+import io
 
 def history(request):
   histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
@@ -44,6 +52,31 @@ def history(request):
   context = {"histories":histories, "header":header, "width":width}
   return render(request, 'Note/history.html', context)
 
+# def chart(request):
+  # context = None
+  # return render(request, 'Note/chart.html', context)
+
+def fig(request):
+  df = cha.GMO_csv2DataFrame(os.path.join(os.path.dirname(__file__), "../data/rate/USDJPY/202305/USDJPY_20230501.csv"))
+  df = cha.add_BBands(df,20,2,0)
+  buf = io.BytesIO()
+  cha.gen_chart(
+    df.head(100),
+    "2023-05-01 07:23",
+    "2023-05-01 07:33",
+    dict(hlines=[136.28,136.32],colors=["g","g"],linewidths=[0.1,0.1]),
+    rule="5T",
+    savefig={'fname':buf,'dpi':100},
+    figsize=(10,5)
+  )
+  png = buf.getvalue()
+  buf.close()
+  # temp_file.seek(0)
+  # image_data = temp_file.read()
+  # temp_file.close()
+  response = HttpResponse(png, content_type='image/png')
+  return response
+
 def chart(request):
-  context = None
+  context = {}
   return render(request, 'Note/chart.html', context)

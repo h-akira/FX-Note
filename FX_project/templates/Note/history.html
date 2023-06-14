@@ -8,7 +8,6 @@
   <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
     <tbody>
       <tr class="table-warning text-center">
-        {# {% for h in header %} #}
         {% for h,w in header|zip:width %}
         <th scope="col" style="width: {{ w }}px;">
             {{ h }}

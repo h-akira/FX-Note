@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load boost %}
+
+{% block title %}取引履歴{% endblock title %}
+{% block content %}
+<h1>チャート</h1>
+{# <img src="data:image/png;base64,{{ png }}" alt="Chart"></img> #}
+<img src="{% url 'Note:fig' %}" alt="Chart"></img>
+{# <div class="table-responsive"> #}
+{#   <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;"> #}
+{#     <tbody> #}
+{#       <tr class="table-warning text-center"> #}
+{#         {% for h,w in header|zip:width %} #}
+{#         <th scope="col" style="width: {{ w }}px;"> #}
+{#             {{ h }} #}
+{#         </th> #}
+{#         {% endfor %} #}
+{#       </tr> #}
+{#       {% for history in histories %} #}
+{#       <tr class="text-center"> #}
+{#         <td> #}
+{#           {{ history.account }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.order_number }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.kind }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.pair }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {% if history.buy_sell == "buy" %} #}
+{#           <div class="text-primary"> #}
+{#           {% else %} #}
+{#           <div class="text-danger"> #}
+{#           {% endif %} #}
+{#           {{ history.buy_sell }} #}
+{#           </div> #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.order_type }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.quantity }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {% if history.state == "executed" %} #}
+{#           <div class="text-success"> #}
+          {# <div class="text-danger"> #}
+{#           {% elif history.state == "canceled" %} #}
+{#           <div class="text-secondary"> #}
+{#           {% elif history.state == "accepted" %} #}
+{#           <div class="text-primary"> #}
+{#           {% else %} #}
+{#           <div> #}
+{#           {% endif %} #}
+{#           {{ history.state }} #}
+{#           </div> #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.revocation_reason|default_if_none:'' }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.order_datetime|date:"Y-m-d H:i:s" }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.order_rate }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.condition }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.execution_datetime|date:"Y-m-d H:i:s" }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.execution_rate|default_if_none:'' }} #}
+{#         </td> #}
+{#         <td> #}
+{#           {% if history.profit >= 0 %} #}
+{#           +{{ history.profit|default_if_none:'' }} #}
+{#           {% else %} #}
+{#           <div class="text-danger"> #}
+{#           {{ history.profit|default_if_none:'' }} #}
+{#           </div> #}
+{#           {% endif %} #}
+{#         </td> #}
+{#         <td> #}
+{#           {{ history.swap|default_if_none:'' }} #}
+{#         </td> #}
+{#       </tr> #}
+{#       {% endfor %} #}
+{#     </tbody> #}
+{#   </table> #}
+{# </div> #}
+{#  #}
+
+{% endblock content %}
