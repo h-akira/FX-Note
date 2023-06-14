@@ -83,10 +83,11 @@ def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None
   # 例: {'fname':'test.png','dpi':100}
   # ruleは"5T"など
   if rule != None:
-    df["Open"] = df["Open"].resample(rule).first()
-    df["High"] = df["High"].resample(rule).max()
-    df["Low"] = df["Low"].resample(rule).min()
-    df["Close"] = df["Close"].resample(rule).last()
+    df_old = df.copy()
+    df["Open"] = df_old["Open"].resample(rule).first()
+    df["High"] = df_old["High"].resample(rule).max()
+    df["Low"] = df_old["Low"].resample(rule).min()
+    df["Close"] = df_old["Close"].resample(rule).last()
   plot_args = {
     "type":"candle",
   }
