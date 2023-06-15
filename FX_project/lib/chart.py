@@ -5,7 +5,6 @@
 
 # Import
 import pandas as pd
-import mplfinance as mpf
 import talib
 import numpy
 import glob
@@ -13,7 +12,12 @@ import os
 import re
 import io
 import datetime
-import matplotlib.pyplot as plt
+import matplotlib
+# matplotlib.use('TkAgg')
+# matplotlib.use('Qt5Agg')
+matplotlib.use("Agg")
+# import matplotlib.pyplot as plt
+import mplfinance as mpf
 
 def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
   # ディレクトリ構造は以下の通り:
