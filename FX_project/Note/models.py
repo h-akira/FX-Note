@@ -34,5 +34,20 @@ class HistoryTable(models.Model):
         name="history_unique"
       )
     ]
-
   
+class ChartTable(models.Model):
+  user = models.ForeignKey(User,on_delete=models.CASCADE)
+  name = models.CharField(max_length=255)
+  pair = models.CharField(max_length=10)
+  rule = models.CharField(max_length=10)
+  standard_datetime = models.DateTimeField()
+  minus_delta = models.IntegerField()
+  plus_delta = models.IntegerField()
+  memo = models.CharField(max_length=511)
+
+
+
+
+
+
+

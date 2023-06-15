@@ -5,7 +5,8 @@
 {% block content %}
 <h1>チャート</h1>
 {# <img src="data:image/png;base64,{{ png }}" alt="Chart"></img> #}
-<img src="{% url 'Note:fig' %}" alt="Chart"></img>
+{# <img src="{% url 'Note:fig' %}" alt="Chart"></img> #}
+<img src="data:image/png;base64,{{ chart_data  }}" alt="Chart">
 {# <div class="table-responsive"> #}
 {#   <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;"> #}
 {#     <tbody> #}
