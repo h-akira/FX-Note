@@ -20,6 +20,8 @@ matplotlib.use("Agg")
 import mplfinance as mpf
 
 def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
+  # pairは"/"を含んでいてもいなくても処理可能
+  # date_rangeはdatetime.date型を要素に持つリストまたはタプル
   # ディレクトリ構造は以下の通り:
   # .
   # |-USDJPY
@@ -34,17 +36,16 @@ def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
   # |   |-...
   # |-EURJPY
   #    |-...
-  file_list = glob.glob(os.path.join(dir_name,pair)+f"/*/{pair}_*.csv")
+  file_list = glob.glob(os.path.join(dir_name,pair.replace("/",""))+f"/*/{pair.replace('/','')}_*.csv")
   df = pd.DataFrame()
   for file in file_list:
-    if os.path.basename(file)[:len(pair)] != pair or file[-4:] != ".csv":
+    if os.path.basename(file)[:len(pair.replace("/",""))] != pair.replace("/","") or file[-4:] != ".csv":
       print(f"skip: {file}")
       continue
     m = re.search(r"\d{4}\d{2}\d{2}", file)
     if m:
       file_date = datetime.datetime.strptime(m.group(),"%Y%m%d").date()  # 日付文字列を取得
     else:
-      print(f"skip: {file}")
       continue
     if date_range != None:
       if date_range[0] <= file_date < date_range[1]:
@@ -53,7 +54,7 @@ def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
         continue
     df = pd.concat([df,GMO_csv2DataFrame(file)])
   df = df.sort_values(by="date", ascending=True)
-  print(df)
+  return df
 
 
 def GMO_csv2DataFrame(file_name,BID_ASK="BID"):
