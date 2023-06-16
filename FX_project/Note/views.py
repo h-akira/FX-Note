@@ -9,6 +9,7 @@ import lib.chart as cha
 import matplotlib.pyplot as plt
 import io
 import base64
+import datetime
 
 def history(request):
   histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
@@ -87,9 +88,23 @@ def fig(request):
   ##########################################################################################
   return response
 
-# def chart(request,id):
-def chart(request):
-  df = cha.GMO_csv2DataFrame(os.path.join(os.path.dirname(__file__), "../data/rate/USDJPY/202305/USDJPY_20230501.csv"))
+def chart_index(request):
+  context = {}
+  return render(request, 'Note/chart_index.html', context)
+
+def chart(request,id):
+# def chart(request):
+  _chart = get_object_or_404(ChartTable, pk=id)
+  # df = cha.GMO_csv2DataFrame(os.path.join(os.path.dirname(__file__), "../data/rate/USDJPY/202305/USDJPY_20230501.csv"))
+  df = cha.GMO_dir2DataFrame(
+    os.path.join(os.path.dirname(__file__), "../data/rate"), 
+    pair=_chart.pair,
+    date_range=[
+      (_chart.standard_datetime-datetime.timedelta(days=1)).date(),
+      (_chart.standard_datetime+datetime.timedelta(days=1)).date()
+    ]
+  ) 
+  print(df)
   df = cha.resample(df.head(500), "5T")
   df = cha.add_BBands(df,20,2,0)
   buf = io.BytesIO()
