@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import history, chart ,chart_index, fig
+from .views import history, chart ,chart_index
 
 app_name = 'Note'
 

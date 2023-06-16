@@ -1,10 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from django.shortcuts import render, get_object_or_404
 from .models import HistoryTable, ChartTable
 from django.http import HttpResponse
-import sys
-import os
-import tempfile
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# import tempfile
 import lib.chart as cha
 import matplotlib.pyplot as plt
 import io
@@ -14,8 +14,6 @@ import pandas as pd
 
 def history(request):
   histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
-  # for h in histories:
-    # print(h.__class__)
   header = [
     "アカウント",
     "注文番号",
@@ -55,8 +53,7 @@ def history(request):
   context = {"histories":histories, "header":header, "width":width}
   return render(request, 'Note/history.html', context)
 
-def fig(request):
-
+# def fig(request):
   ##########################################################################################
   # df = cha.GMO_csv2DataFrame(os.path.join(os.path.dirname(__file__), "../data/rate/USDJPY/202305/USDJPY_20230501.csv"))
   # df = cha.resample(df.head(500), "5T")
@@ -87,7 +84,7 @@ def fig(request):
   # buf.close()
   # response = HttpResponse(png, content_type='image/png')
   ##########################################################################################
-  return response
+  # return response
 
 def chart_index(request):
   context = {}
@@ -104,13 +101,15 @@ def chart(request,id):
     ]
   ) 
   df = cha.add_BBands(df,20,2,0)
+  # 最もstandard_datetimeに近い列の周辺のデータを取得する
   target_datetime = pd.Timestamp(_chart.standard_datetime).tz_localize(None)
-  print(pd.DataFrame(df.index))
   nearest_index = (pd.DataFrame(df.index) - target_datetime).abs().idxmin().date
   start_index = max(0, nearest_index - _chart.minus_delta)
   end_index = min(nearest_index + _chart.plus_delta, len(df) - 1)
   df = df.iloc[start_index:end_index+1]
+  # 画像の出力先
   buf = io.BytesIO()
+  # チャートを作成
   cha.gen_chart(
     df,
     # "2023-05-01 07:23",
@@ -136,9 +135,3 @@ def chart(request,id):
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
   return render(request, 'Note/chart.html', {'chart_data': image_data})
   # buf.close()
-  # response = HttpResponse(png, content_type='image/png')
-  #########################################################################################
-  # _chart = get_object_or_404(ChartTable, pk=id)
-  # context = {}
-  
-  # return render(request, 'Note/chart.html', context)
