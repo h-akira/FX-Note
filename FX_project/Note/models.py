@@ -41,8 +41,8 @@ class ChartTable(models.Model):
   pair = models.CharField(max_length=10)
   rule = models.CharField(max_length=10)
   standard_datetime = models.DateTimeField()
-  minus_delta = models.IntegerField()
-  plus_delta = models.IntegerField()
+  minus_delta = models.IntegerField(default=50)
+  plus_delta = models.IntegerField(default=50)
   memo = models.CharField(max_length=511)
 
 
