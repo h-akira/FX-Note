@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import datetime
+import pandas as pd
 
 def history(request):
   histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
@@ -93,9 +94,7 @@ def chart_index(request):
   return render(request, 'Note/chart_index.html', context)
 
 def chart(request,id):
-# def chart(request):
   _chart = get_object_or_404(ChartTable, pk=id)
-  # df = cha.GMO_csv2DataFrame(os.path.join(os.path.dirname(__file__), "../data/rate/USDJPY/202305/USDJPY_20230501.csv"))
   df = cha.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair=_chart.pair,
@@ -104,15 +103,19 @@ def chart(request,id):
       (_chart.standard_datetime+datetime.timedelta(days=1)).date()
     ]
   ) 
-  print(df)
-  df = cha.resample(df.head(500), "5T")
   df = cha.add_BBands(df,20,2,0)
+  target_datetime = pd.Timestamp(_chart.standard_datetime).tz_localize(None)
+  print(pd.DataFrame(df.index))
+  nearest_index = (pd.DataFrame(df.index) - target_datetime).abs().idxmin().date
+  start_index = max(0, nearest_index - _chart.minus_delta)
+  end_index = min(nearest_index + _chart.plus_delta, len(df) - 1)
+  df = df.iloc[start_index:end_index+1]
   buf = io.BytesIO()
   cha.gen_chart(
-    df.head(500),
-    "2023-05-01 07:23",
-    "2023-05-01 07:33",
-    dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
+    df,
+    # "2023-05-01 07:23",
+    # "2023-05-01 07:33",
+    # hlines=dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
     lines=[
       {
         "data":df[["bb_up","bb_down"]],
