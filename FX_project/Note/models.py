@@ -45,6 +45,10 @@ class ChartTable(models.Model):
   plus_delta = models.IntegerField(default=50)
   memo = models.CharField(max_length=511)
 
+class HistoryLinkTable(models.Model):
+  chart = models.ForeignKey(ChartTable, on_delete=models.CASCADE)
+  history = models.ForeignKey(HistoryTable, on_delete=models.CASCADE)
+
 
 
 

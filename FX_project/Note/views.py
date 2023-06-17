@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from django.shortcuts import render, get_object_or_404
-from .models import HistoryTable, ChartTable
+from .models import HistoryTable, ChartTable, HistoryLinkTable
 from django.http import HttpResponse
 # import tempfile
 import lib.chart as cha
@@ -53,45 +53,13 @@ def history(request):
   context = {"histories":histories, "header":header, "width":width}
   return render(request, 'Note/history.html', context)
 
-# def fig(request):
-  ##########################################################################################
-  # df = cha.GMO_csv2DataFrame(os.path.join(os.path.dirname(__file__), "../data/rate/USDJPY/202305/USDJPY_20230501.csv"))
-  # df = cha.resample(df.head(500), "5T")
-  # df = cha.add_BBands(df,20,2,0)
-  # buf = io.BytesIO()
-  # cha.gen_chart(
-  #   df.head(500),
-  #   "2023-05-01 07:23",
-  #   "2023-05-01 07:33",
-  #   dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
-  #   lines=[
-  #     {
-  #       "data":df[["bb_up","bb_down"]],
-  #       "linestyle":"dashdot",
-  #       "color":"r",
-  #       "alpha":0.5
-  #     },
-  #     {
-  #       "data":df[["bb_middle"]],
-  #       "color":"b",
-  #       "alpha":0.5
-  #     }
-  #   ],
-  #   savefig={'fname':buf,'dpi':100},
-  #   figsize=(10,5)
-  # )
-  # png = buf.getvalue()
-  # buf.close()
-  # response = HttpResponse(png, content_type='image/png')
-  ##########################################################################################
-  # return response
-
 def chart_index(request):
   context = {}
   return render(request, 'Note/chart_index.html', context)
 
 def chart(request,id):
   _chart = get_object_or_404(ChartTable, pk=id)
+  _link = get_object_or_404(HistoryLinkTable, pk=1)
   df = cha.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair=_chart.pair,
