@@ -54,7 +54,25 @@ def history(request):
   return render(request, 'Note/history.html', context)
 
 def chart_index(request):
-  context = {}
+  charts = ChartTable.objects.filter(user=request.user)
+  links = [HistoryLinkTable.objects.filter(chart=i).count() for i in charts]
+  header = [
+    "登録名",
+    "通貨ペア",
+    "足",
+    "基準日時",
+    "新規+決済",
+    "操作"
+  ]
+  width = [
+  200,  # 登録名
+  100,  # 通貨ペア
+  50,  # 足
+  200,  # 基準日時
+  100,  # 新規+決済
+  100  # 操作
+  ]
+  context = {"charts":charts, "links":links, "header":header, "width":width}
   return render(request, 'Note/chart_index.html', context)
 
 def chart(request,id):
