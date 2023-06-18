@@ -3,7 +3,9 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from django.shortcuts import render, get_object_or_404
 from .models import HistoryTable, ChartTable, HistoryLinkTable
+from .forms import ChartForm
 from django.http import HttpResponse
+from django.db.models import Avg
 # import tempfile
 import lib.chart as cha
 import matplotlib.pyplot as plt
@@ -30,7 +32,7 @@ def history(request):
     "約定日時",
     "約定レート",
     "決済損益",
-    "スワップ"
+    "スワップ",
   ]
   width = [
     100,  # アカウント
@@ -121,3 +123,71 @@ def chart(request,id):
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
   return render(request, 'Note/chart.html', {'chart_data': image_data})
   # buf.close()
+
+def histories2chart(request):
+  # print(request.POST.getlist("register"))
+  histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register")).order_by("-order_number","-order_datetime")
+  # dts = histories.values_list("execution_datetime"))
+  dts = [i[0].timestamp() for i in histories.values_list("execution_datetime") if i[0] != None]
+  if len(dts) == 0:
+    dts = [i[0].timestamp() for i in histories.values_list("order_datetime") if i[0] != None]
+  timezones = [i[0].tzinfo for i in histories.values_list("execution_datetime") if i[0] != None]
+  if len(timezones) != timezones.count(timezones[0]):
+    raise Exception
+  ave = datetime.datetime.fromtimestamp(sum(dts)/len(dts),tz=timezones[0])
+  print(dts)
+  print(timezones)
+  print(ave)
+  initial = {
+    "user":request.user,
+    "standard_datetime": ave,
+    "plus_delta":50,
+    "minus_delta":50
+  }
+  form = ChartForm(initial=initial)
+  # print(request.POST.getlist["register"])
+  header = [
+    "アカウント",
+    "注文番号",
+    "取引種類",
+    "通貨ペア",
+    "売買",
+    "注文タイプ",
+    "取引数量",
+    "状態",
+    "失効理由",
+    "注文日時",
+    "注文レート",
+    "執行条件",
+    "約定日時",
+    "約定レート",
+    "決済損益",
+    "スワップ",
+  ]
+  width = [
+    100,  # アカウント
+    80,  # 注文番号
+    100,  # 取引種類
+    100,  # 通貨ペア
+    50,  # 売買
+    100,  # 注文タイプ
+    80,  # 取引数量
+    100,  # 状態
+    80,  # 失効理由
+    200,  # 注文日時
+    100,  # 注文レート
+    80,  # 執行条件
+    200,  # 約定日時
+    100,  # 約定レート
+    100,  # 決済損益
+    100  # スワップ
+  ]
+  context = {"histories":histories, "header":header, "width":width, "form":form}
+  return render(request, 'Note/edit.html', context)
+
+
+
+
+
+
+

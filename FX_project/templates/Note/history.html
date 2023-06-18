@@ -4,94 +4,103 @@
 {% block title %}取引履歴{% endblock title %}
 {% block content %}
 <h1>取引履歴</h1>
-<div class="table-responsive">
-  <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
-    <tbody>
-      <tr class="table-warning text-center">
-        {% for h,w in header|zip:width %}
-        <th scope="col" style="width: {{ w }}px;">
-            {{ h }}
-        </th>
+{# <form class="" action="{% url 'chart_generate' %}" method="post" enctype="multipart/form-data"> #}
+<form class="" action='{% url "Note:chart_generate" %}' method="post">
+  {% csrf_token %}
+  <div class="table-responsive">
+    <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
+      <tbody>
+        <tr class="table-warning text-center">
+          {% for h,w in header|zip:width %}
+          <th scope="col" style="width: {{ w }}px;">
+              {{ h }}
+          </th>
+          {% endfor %}
+          <th scope="col" style="width: 80px;">
+            <button type="submit" class="btn btn-primary btn-sm">作成</button>
+          </th>
+        </tr>
+        {% for history in histories %}
+        <tr class="text-center">
+          <td>
+            {{ history.account }}
+          </td>
+          <td>
+            {{ history.order_number }}
+          </td>
+          <td>
+            {{ history.kind }}
+          </td>
+          <td>
+            {{ history.pair }}
+          </td>
+          <td>
+            {% if history.buy_sell == "buy" %}
+            <div class="text-primary">
+            {% else %}
+            <div class="text-danger">
+            {% endif %}
+            {{ history.buy_sell }}
+            </div>
+          </td>
+          <td>
+            {{ history.order_type }}
+          </td>
+          <td>
+            {{ history.quantity }}
+          </td>
+          <td>
+            {% if history.state == "executed" %}
+            <div class="text-success">
+            {# <div class="text-danger"> #}
+            {% elif history.state == "canceled" %}
+            <div class="text-secondary">
+            {% elif history.state == "accepted" %}
+            <div class="text-primary">
+            {% else %}
+            <div>
+            {% endif %}
+            {{ history.state }}
+            </div>
+          </td>
+          <td>
+            {{ history.revocation_reason|default_if_none:'' }}
+          </td>
+          <td>
+            {{ history.order_datetime|date:"Y-m-d H:i:s" }}
+          </td>
+          <td>
+            {{ history.order_rate }}
+          </td>
+          <td>
+            {{ history.condition }}
+          </td>
+          <td>
+            {{ history.execution_datetime|date:"Y-m-d H:i:s" }}
+          </td>
+          <td>
+            {{ history.execution_rate|default_if_none:'' }}
+          </td>
+          <td>
+            {% if history.profit >= 0 %}
+            +{{ history.profit|default_if_none:'' }}
+            {% else %}
+            <div class="text-danger">
+            {{ history.profit|default_if_none:'' }}
+            </div>
+            {% endif %}
+          </td>
+          <td>
+            {{ history.swap|default_if_none:'' }}
+          </td>
+          <td>
+            <input type="checkbox" name="register" value="{{ history.id }}">
+          </td>
+        </tr>
         {% endfor %}
-      </tr>
-      {% for history in histories %}
-      <tr class="text-center">
-        <td>
-          {{ history.account }}
-        </td>
-        <td>
-          {{ history.order_number }}
-        </td>
-        <td>
-          {{ history.kind }}
-        </td>
-        <td>
-          {{ history.pair }}
-        </td>
-        <td>
-          {% if history.buy_sell == "buy" %}
-          <div class="text-primary">
-          {% else %}
-          <div class="text-danger">
-          {% endif %}
-          {{ history.buy_sell }}
-          </div>
-        </td>
-        <td>
-          {{ history.order_type }}
-        </td>
-        <td>
-          {{ history.quantity }}
-        </td>
-        <td>
-          {% if history.state == "executed" %}
-          <div class="text-success">
-          {# <div class="text-danger"> #}
-          {% elif history.state == "canceled" %}
-          <div class="text-secondary">
-          {% elif history.state == "accepted" %}
-          <div class="text-primary">
-          {% else %}
-          <div>
-          {% endif %}
-          {{ history.state }}
-          </div>
-        </td>
-        <td>
-          {{ history.revocation_reason|default_if_none:'' }}
-        </td>
-        <td>
-          {{ history.order_datetime|date:"Y-m-d H:i:s" }}
-        </td>
-        <td>
-          {{ history.order_rate }}
-        </td>
-        <td>
-          {{ history.condition }}
-        </td>
-        <td>
-          {{ history.execution_datetime|date:"Y-m-d H:i:s" }}
-        </td>
-        <td>
-          {{ history.execution_rate|default_if_none:'' }}
-        </td>
-        <td>
-          {% if history.profit >= 0 %}
-          +{{ history.profit|default_if_none:'' }}
-          {% else %}
-          <div class="text-danger">
-          {{ history.profit|default_if_none:'' }}
-          </div>
-          {% endif %}
-        </td>
-        <td>
-          {{ history.swap|default_if_none:'' }}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
+      </tbody>
+    </table>
+  </div>
+</form>
 
 {% endblock content %}
