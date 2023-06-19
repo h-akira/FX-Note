@@ -89,6 +89,13 @@ def chart(request,id):
   histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
   histories = sorted(histories, reverse=True, key=lambda x: x.id)
   histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
+  execution = [i.execution_datetime for i in histories if i.execution_datetime != None]
+  if len(execution) >= 2:
+    start = min(execution)
+    end = max(execution)
+  else:
+    start = None
+    end = None
   # _link = get_object_or_404(HistoryLinkTable, pk=1)
   df = cha.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
@@ -110,7 +117,9 @@ def chart(request,id):
   # チャートを作成
   cha.gen_chart(
     df,
-    # "2023-05-01 07:23",
+    transaction_start=start,
+    transaction_end=end,
+    # "2023-05-01 07:33",
     # "2023-05-01 07:33",
     # hlines=dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
     lines=[

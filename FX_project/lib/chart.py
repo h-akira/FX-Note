@@ -96,7 +96,7 @@ def resample(df, rule):
   df = df.dropna(how="any")
   return df
 
-def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,lines=None, style=None, savefig=None,figsize=(2,1),png=False, dpi=200):
+def gen_chart(df,transaction_start=None,transaction_end=None,hlines=None,vlines=None,lines=None, style=None, savefig=None,figsize=(2,1),png=False, dpi=200):
   # hlinesとvlinseは辞書型
   # 例: {'hlines':[136.28,136.32],'colors':['g','r'],'linewidths'=[1,1]}
   # linesは辞書型を要素とするリスト
@@ -107,15 +107,20 @@ def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,lines=None
   plot_args = {
     "type":"candle",
   }
-  if buy_time != None and sell_time != None:
-    if buy_time.__class__ == str:
-      buy_time=pd.Timestamp(buy_time),
-    if sell_time.__class__ == str:
-      sell_time=pd.Timestamp(sell_time),
+  if transaction_start != None and transaction_end != None:
+    # 型変換
+    if transaction_start.__class__ == str:
+      transaction_start=pd.Timestamp(transaction_start),
+    elif transaction_start.__class__ == datetime.datetime:
+      transaction_start=pd.Timestamp(transaction_start.strftime("%Y-%m-%d %H:%M"))
+    if transaction_end.__class__ == str:
+      transaction_end=pd.Timestamp(transaction_end),
+    elif transaction_end.__class__ == datetime.datetime:
+      transaction_end=pd.Timestamp(transaction_end.strftime("%Y-%m-%d %H:%M"))
     dates_df = pd.DataFrame(df.index)
     y1value = df['Close'].max()
     y2value = df['Low'].min()
-    where_values = pd.notnull(dates_df[(dates_df>=buy_time)&(dates_df<=sell_time)])['date'].values
+    where_values = pd.notnull(dates_df[(dates_df>=transaction_start)&(dates_df<=transaction_end)])['date'].values
     plot_args["fill_between"] = dict(y1=y1value, y2=y2value, where=where_values, alpha=0.2) 
   if lines != None:
     plot_args["addplot"] = [mpf.make_addplot(**line_args) for line_args in lines]
