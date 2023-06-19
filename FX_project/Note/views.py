@@ -132,7 +132,7 @@ def chart(request,id):
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
   # image_data = base64.b64encode(buf.getvalue())
   context = {
-    "image_date": base64.b64encode(buf.getvalue()).decode("utf-8"),
+    "image_data": image_data,
     "histories":histories, 
     "header":history_header, 
     "width":history_width,
