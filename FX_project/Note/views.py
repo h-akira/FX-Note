@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import HistoryTable, ChartTable, HistoryLinkTable
 from .forms import ChartForm
 from django.http import HttpResponse
@@ -14,45 +14,52 @@ import base64
 import datetime
 import pandas as pd
 
+history_header = [
+  "アカウント",
+  "注文番号",
+  "取引種類",
+  "通貨ペア",
+  "売買",
+  "注文タイプ",
+  "取引数量",
+  "状態",
+  "失効理由",
+  "注文日時",
+  "注文レート",
+  "執行条件",
+  "約定日時",
+  "約定レート",
+  "決済損益",
+  "スワップ",
+]
+history_width = [
+  100,  # アカウント
+  80,  # 注文番号
+  100,  # 取引種類
+  100,  # 通貨ペア
+  50,  # 売買
+  100,  # 注文タイプ
+  80,  # 取引数量
+  100,  # 状態
+  80,  # 失効理由
+  200,  # 注文日時
+  100,  # 注文レート
+  80,  # 執行条件
+  200,  # 約定日時
+  100,  # 約定レート
+  100,  # 決済損益
+  100  # スワップ
+]
+
 def history(request):
   histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
-  header = [
-    "アカウント",
-    "注文番号",
-    "取引種類",
-    "通貨ペア",
-    "売買",
-    "注文タイプ",
-    "取引数量",
-    "状態",
-    "失効理由",
-    "注文日時",
-    "注文レート",
-    "執行条件",
-    "約定日時",
-    "約定レート",
-    "決済損益",
-    "スワップ",
-  ]
-  width = [
-    100,  # アカウント
-    80,  # 注文番号
-    100,  # 取引種類
-    100,  # 通貨ペア
-    50,  # 売買
-    100,  # 注文タイプ
-    80,  # 取引数量
-    100,  # 状態
-    80,  # 失効理由
-    200,  # 注文日時
-    100,  # 注文レート
-    80,  # 執行条件
-    200,  # 約定日時
-    100,  # 約定レート
-    100,  # 決済損益
-    100  # スワップ
-  ]
-  context = {"histories":histories, "header":header, "width":width}
+  context = {
+    "histories":histories, 
+    "header":history_header, 
+    "width":history_width,
+    "box":True, 
+    "checked":False
+  }
   return render(request, 'Note/history.html', context)
 
 def chart_index(request):
@@ -74,12 +81,15 @@ def chart_index(request):
   100,  # 新規+決済
   100  # 操作
   ]
-  context = {"charts":charts, "links":links, "header":header, "width":width}
+  context = {"charts":charts, "links":links, "header":header, "width":width, "box":False, "checked":False}
   return render(request, 'Note/chart_index.html', context)
 
 def chart(request,id):
   _chart = get_object_or_404(ChartTable, pk=id)
-  _link = get_object_or_404(HistoryLinkTable, pk=1)
+  histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
+  histories = sorted(histories, reverse=True, key=lambda x: x.id)
+  histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
+  # _link = get_object_or_404(HistoryLinkTable, pk=1)
   df = cha.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair=_chart.pair,
@@ -119,12 +129,33 @@ def chart(request,id):
     savefig={'fname':buf,'dpi':100},
     figsize=(10,5)
   )
-  # png = buf.getvalue()
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-  return render(request, 'Note/chart.html', {'chart_data': image_data})
+  # image_data = base64.b64encode(buf.getvalue())
+  context = {
+    "image_date": base64.b64encode(buf.getvalue()).decode("utf-8"),
+    "histories":histories, 
+    "header":history_header, 
+    "width":history_width,
+    "box":False, 
+    "checked":False
+  }
+  return render(request, 'Note/chart.html', context)
+  # return render(
+  #   request,
+  #   'Note/chart.html',
+  #   {
+  #     "image_date": base64.b64encode(buf.getvalue()).decode("utf-8"),
+  #     "histories":histories, 
+  #     "header":history_header, 
+  #     "width":history_width,
+  #     "box":False, 
+  #     "checked":False
+  #   }
+  # )
+  #
   # buf.close()
 
-def histories2chart(request):
+def histories2edit(request):
   # print(request.POST.getlist("register"))
   histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register")).order_by("-order_number","-order_datetime")
   # dts = histories.values_list("execution_datetime"))
@@ -134,60 +165,38 @@ def histories2chart(request):
   timezones = [i[0].tzinfo for i in histories.values_list("execution_datetime") if i[0] != None]
   if len(timezones) != timezones.count(timezones[0]):
     raise Exception
+  pairs = [i[0] for i in histories.values_list("pair")]
+  print(pairs)
+  if len(pairs) != pairs.count(pairs[0]):
+    raise Exception
   ave = datetime.datetime.fromtimestamp(sum(dts)/len(dts),tz=timezones[0])
-  print(dts)
-  print(timezones)
-  print(ave)
   initial = {
     "user":request.user,
+    "pair":pairs[0],
     "standard_datetime": ave,
     "plus_delta":50,
     "minus_delta":50
   }
   form = ChartForm(initial=initial)
   # print(request.POST.getlist["register"])
-  header = [
-    "アカウント",
-    "注文番号",
-    "取引種類",
-    "通貨ペア",
-    "売買",
-    "注文タイプ",
-    "取引数量",
-    "状態",
-    "失効理由",
-    "注文日時",
-    "注文レート",
-    "執行条件",
-    "約定日時",
-    "約定レート",
-    "決済損益",
-    "スワップ",
-  ]
-  width = [
-    100,  # アカウント
-    80,  # 注文番号
-    100,  # 取引種類
-    100,  # 通貨ペア
-    50,  # 売買
-    100,  # 注文タイプ
-    80,  # 取引数量
-    100,  # 状態
-    80,  # 失効理由
-    200,  # 注文日時
-    100,  # 注文レート
-    80,  # 執行条件
-    200,  # 約定日時
-    100,  # 約定レート
-    100,  # 決済損益
-    100  # スワップ
-  ]
-  context = {"histories":histories, "header":header, "width":width, "form":form}
+  context = {"histories":histories, "header":history_header, "width":history_width, "form":form, "box":True, "checked":True}
   return render(request, 'Note/edit.html', context)
 
-
-
-
-
+def chart_add(request):
+    form = ChartForm(request.POST)
+    histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
+    print(histories)
+    if form.is_valid():
+      latest_chart = form.save()
+      for history in histories:
+        obj = HistoryLinkTable(chart=latest_chart, history=history)
+        obj.save()
+      return chart_index(request)
+      # return index(request)
+      # return redirect("Note:chart")
+    else:
+      print("not valid")
+      return redirect("Note:history")
+#
 
 

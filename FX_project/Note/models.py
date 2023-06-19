@@ -5,7 +5,10 @@ from django.utils import timezone
 KIND = (("new","新規"),("settlement","決済"))
 BUY_SELL = (("buy","買"),("sell","売"))
 STATE = (("accepted","受付済"),("executed","約定済"),("canceled","取消済"))
-CONDITION = (("指値","limit"),("逆指値","stop"),("成行","market"))
+# CONDITION = (("指値","limit"),("逆指値","stop"),("成行","market"))
+CONDITION = (("limit","指値"),("stop","逆指値"),("market","成行"))
+# RULE = (("1分足","1T"),("3分足","3T"),("15分足","15T"))
+RULE = (("1T","1分足"),("3T","3分足"),("15T","15分足"))
 
 class HistoryTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
@@ -39,11 +42,11 @@ class ChartTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
   name = models.CharField(max_length=255)
   pair = models.CharField(max_length=10)
-  rule = models.CharField(max_length=10)
+  rule = models.CharField(max_length=10, choices=RULE)
   standard_datetime = models.DateTimeField()
   minus_delta = models.IntegerField(default=50)
   plus_delta = models.IntegerField(default=50)
-  memo = models.CharField(max_length=511)
+  memo = models.CharField(max_length=511,null=True, blank=True)
 
 class HistoryLinkTable(models.Model):
   chart = models.ForeignKey(ChartTable, on_delete=models.CASCADE)
