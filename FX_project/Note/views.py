@@ -119,9 +119,8 @@ def chart(request,id):
     df,
     transaction_start=start,
     transaction_end=end,
-    # "2023-05-01 07:33",
-    # "2023-05-01 07:33",
     # hlines=dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
+    hlines=dict(hlines=[],colors=[],linewidths=[]),
     lines=[
       {
         "data":df[["bb_up","bb_down"]],
@@ -139,7 +138,6 @@ def chart(request,id):
     figsize=(10,5)
   )
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-  # image_data = base64.b64encode(buf.getvalue())
   context = {
     "image_data": image_data,
     "histories":histories, 
