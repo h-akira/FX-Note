@@ -2,17 +2,17 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import HistoryTable, ChartTable, HistoryLinkTable
-from .forms import ChartForm
 from django.http import HttpResponse
 from django.db.models import Avg
-# import tempfile
+from django.contrib.auth.decorators import login_required
 import lib.chart as cha
 import matplotlib.pyplot as plt
 import io
 import base64
 import datetime
 import pandas as pd
+from .models import HistoryTable, ChartTable, HistoryLinkTable
+from .forms import ChartForm
 
 history_header = [
   "アカウント",
@@ -51,6 +51,7 @@ history_width = [
   100  # スワップ
 ]
 
+@login_required
 def history(request):
   histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
   context = {
@@ -62,6 +63,7 @@ def history(request):
   }
   return render(request, 'Note/history.html', context)
 
+@login_required
 def chart_index(request):
   charts = ChartTable.objects.filter(user=request.user)
   links = [HistoryLinkTable.objects.filter(chart=i).count() for i in charts]
@@ -84,6 +86,7 @@ def chart_index(request):
   context = {"charts":charts, "links":links, "header":header, "width":width, "box":False, "checked":False}
   return render(request, 'Note/chart_index.html', context)
 
+@login_required
 def chart(request,id):
   _chart = get_object_or_404(ChartTable, pk=id)
   histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
@@ -162,6 +165,7 @@ def chart(request,id):
   #
   # buf.close()
 
+@login_required
 def histories2edit(request):
   # print(request.POST.getlist("register"))
   histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register")).order_by("-order_number","-order_datetime")
@@ -189,6 +193,7 @@ def histories2edit(request):
   context = {"histories":histories, "header":history_header, "width":history_width, "form":form, "box":True, "checked":True}
   return render(request, 'Note/edit.html', context)
 
+@login_required
 def chart_add(request):
     form = ChartForm(request.POST)
     histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
@@ -204,6 +209,4 @@ def chart_add(request):
     else:
       print("not valid")
       return redirect("Note:history")
-#
-
 
