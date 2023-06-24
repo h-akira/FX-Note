@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+from .settings_local import *
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,11 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wow$%+@+q=j3)t=e3zr92t^ne-+-uoc#em8az%)+22sjvlh5!b'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -110,8 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # LANGUAGE_CODE = 'en-us'
 LANGUAGE_CODE = 'ja'
 
-TIME_ZONE = 'UTC'
-# TIME_ZONE = 'Asis/Tokyo'
+TIME_ZONE = 'Asia/Tokyo'
 
 USE_I18N = True
 
