@@ -20,3 +20,22 @@ sudo make
 sudo make install
 pip3 install TA-Lib
 ```
+
+# Generate and set SECRET KEY
+Launch a shell:
+```
+python3 manage.py shell
+```
+Generate and print SECRET KEY:
+```
+from django.core.management.utils import get_random_secret_key
+get_random_secret_key()
+exit()
+```
+Then copy `settings_local_sample.py` as `secret_local.py` and replace `{}` in settings_local.py
+
+
+
+
+
+
