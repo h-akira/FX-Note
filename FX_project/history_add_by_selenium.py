@@ -87,6 +87,8 @@ def main():
   options = parse_args()
   # jsonを読む
   info = json.load(open(options.file, mode="r", encoding=options.encoding))
+  if not info["selenium"]["password"]:
+    info["selenium"]["password"] = input("Password: ")
   
   # データベースに追加するための設定
   # タイムゾーン
