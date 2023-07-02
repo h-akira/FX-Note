@@ -1,0 +1,14 @@
+{
+  "selenium":{
+    "driver":"/usr/bin/chromedriver",
+    "url" : "https://sec-sso.click-sec.com/loginweb/sessionInvalidate",
+    "username" : "123456789",
+    "password" : "hogehoge"
+  },
+  "django":{
+    "username" : "admin",
+    "account" : "MAIN",
+    "timezone" : "Asia/Tokyo"
+  } 
+}
+
