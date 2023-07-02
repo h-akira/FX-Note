@@ -142,7 +142,6 @@ def main():
         break
     else:
       break
-    sleep(5)
   driver.quit()
 
 if __name__ == '__main__':
