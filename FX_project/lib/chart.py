@@ -13,6 +13,7 @@ import re
 import io
 import datetime
 import matplotlib
+from pytz import timezone
 # matplotlib.use('TkAgg')
 # matplotlib.use('Qt5Agg')
 matplotlib.use("Agg")
@@ -74,6 +75,8 @@ def GMO_csv2DataFrame(file_name,BID_ASK="BID"):
       df = df.drop(col, axis=1) 
   df["date"] = pd.to_datetime(df["date"])
   df.set_index("date", inplace=True)
+  df.index = df.index.tz_localize(timezone('Asia/Tokyo'))
+  print(df)
   return df
 
 def add_BBands(df,period=20,nbdev=2,matype=0, name={"up":"bb_up", "middle":"bb_middle", "down":"bb_down"}):
@@ -109,15 +112,24 @@ def gen_chart(df,transaction_start=None,transaction_end=None,hlines=None,vlines=
   }
   if transaction_start != None and transaction_end != None:
     # 型変換
+    # print("*********************")
+    # print(transaction_start)
+    # print(transaction_end)
+    # print("*********************")
     if transaction_start.__class__ == str:
-      transaction_start=pd.Timestamp(transaction_start),
+      transaction_start=pd.Timestamp(transaction_start, tz=timezone("Asia/Tokyo"))
     elif transaction_start.__class__ == datetime.datetime:
-      transaction_start=pd.Timestamp(transaction_start.strftime("%Y-%m-%d %H:%M"))
+      transaction_start=pd.Timestamp(transaction_start.astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
     if transaction_end.__class__ == str:
-      transaction_end=pd.Timestamp(transaction_end),
+      transaction_end=pd.Timestamp(transaction_end,tz=timezone("Asia/Tokyo"))
     elif transaction_end.__class__ == datetime.datetime:
-      transaction_end=pd.Timestamp(transaction_end.strftime("%Y-%m-%d %H:%M"))
+      transaction_end=pd.Timestamp(transaction_end.astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
+      # transaction_end=pd.Timestamp(transaction_end.strftime("%Y-%m-%d %H:%M"), tz=timezone("Asia/Tokyo"))
     dates_df = pd.DataFrame(df.index)
+    # print("*********************")
+    # print(transaction_start)
+    # print(transaction_end)
+    # print("*********************")
     y1value = df['Close'].max()
     y2value = df['Low'].min()
     where_values = pd.notnull(dates_df[(dates_df>=transaction_start)&(dates_df<=transaction_end)])['date'].values

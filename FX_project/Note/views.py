@@ -11,6 +11,7 @@ import io
 import base64
 import datetime
 import pandas as pd
+from pytz import timezone
 from .models import HistoryTable, ChartTable, HistoryLinkTable
 from .forms import ChartForm
 
@@ -96,6 +97,9 @@ def chart(request,id):
   if len(execution) >= 2:
     start = min(execution)
     end = max(execution)
+    print("[[[[[[[[[[[[]]]]]]]]]]]]")
+    print(start)
+    print("[[[[[[[[[[[[]]]]]]]]]]]]")
   else:
     start = None
     end = None
@@ -110,11 +114,25 @@ def chart(request,id):
   ) 
   df = cha.add_BBands(df,20,2,0)
   # 最もstandard_datetimeに近い列の周辺のデータを取得する
-  target_datetime = pd.Timestamp(_chart.standard_datetime).tz_localize(None)
+  target_datetime = pd.Timestamp(_chart.standard_datetime)
+  # target_datetime = pd.Timestamp(_chart.standard_datetime).tz_localize(None)
+  # target_datetime = pd.Timestamp(_chart.standard_datetime).tz_convert(timezone('Asia/Tokyo'))
+  # print("-------------------")
+  # print(pd.DataFrame(df.index).date.dt)
+  # print("-------------------")
+  # nearest_index = (pd.DataFrame(df.index).date.dt.tz_localize(timezone("Asia/Tokyo")) - target_datetime).abs().idxmin()
+  # print(nearest_index)
   nearest_index = (pd.DataFrame(df.index) - target_datetime).abs().idxmin().date
   start_index = max(0, nearest_index - _chart.minus_delta)
   end_index = min(nearest_index + _chart.plus_delta, len(df) - 1)
   df = df.iloc[start_index:end_index+1]
+  # 横線
+  hlines=dict(hlines=[],colors=[],linewidths=[])
+  for history in histories:
+    if history.execution_rate != None:
+      hlines["hlines"].append(history.execution_rate)
+      hlines["colors"].append("g")
+      hlines["linewidths"].append(1)
   # 画像の出力先
   buf = io.BytesIO()
   # チャートを作成
@@ -123,7 +141,7 @@ def chart(request,id):
     transaction_start=start,
     transaction_end=end,
     # hlines=dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
-    hlines=dict(hlines=[],colors=[],linewidths=[]),
+    hlines=hlines,
     lines=[
       {
         "data":df[["bb_up","bb_down"]],
