@@ -115,11 +115,6 @@ def gen_chart(df,transaction_start=None,transaction_end=None,max_value=None, min
     "type":"candle",
   }
   if transaction_start != None and transaction_end != None:
-    # 型変換
-    # print("*********************")
-    # print(transaction_start)
-    # print(transaction_end)
-    # print("*********************")
     if transaction_start.__class__ == str:
       transaction_start=pd.Timestamp(transaction_start, tz=timezone("Asia/Tokyo"))
     elif transaction_start.__class__ == datetime.datetime:

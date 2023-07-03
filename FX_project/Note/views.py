@@ -134,8 +134,6 @@ def chart(request,id):
         hlines["colors"].append("r")
       else:
         hlines["colors"].append("b")
-        # hlines["colors"].append("#2ca9e1")
-        # hlines["colors"].append("00bfff")
       hlines["linewidths"].append(0.1)
   # 画像の出力先
   buf = io.BytesIO()
@@ -162,22 +160,22 @@ def chart(request,id):
       },
       {
         "data":df[["SMA_50"]],
-        "color":"#bc763c",
+        "color":"y",
         "alpha":1
       },
       {
         "data":df[["SMA_20"]],
-        "color":"g",
+        "color":"#3eb370",
         "alpha":1
       },
       {
         "data":df[["SMA_5"]],
-        "color":"y",
+        "color":"#bc763c",
         "alpha":1
       }
     ],
     savefig={'fname':buf,'dpi':100},
-    figsize=(15,7),
+    figsize=(18,8),
     # style="binance"
     style="nightclouds"
   )
@@ -273,6 +271,10 @@ def chart_update(request,id):
   else:
     return redirect("Note:chart",id)
 
-
+@login_required
+def chart_delete(request, id):
+  _chart = get_object_or_404(ChartTable, pk=id)
+  _chart.delete()
+  return redirect("Note:chart_index")
 
 
