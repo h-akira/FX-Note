@@ -1,12 +1,48 @@
 {% extends 'base.html' %}
 {% block title %}取引履歴{% endblock title %}
 {% block content %}
-<h1>チャート</h1>
-<a class="btn btn-primary" href='{% url "Note:chart_edit" id %}'>編集</a>
-{# <img src="data:image/png;base64,{{ png }}" alt="Chart"></img> #}
-{# <img src="{% url 'Note:fig' %}" alt="Chart"></img> #}
-
-
+<div class="table-responsive">
+  <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
+    <tbody>
+      <tr class="table-warning text-center">
+        <th scope="col" style="width: 200px;">
+          登録名 
+        </th>
+        <th scope="col" style="width: 100px;">
+          通貨ペア
+        </th>
+        <th scope="col" style="width: 100px;">
+          足
+        </th>
+        <th scope="col" style="width: 500px;">
+          メモ
+        </th>
+        <th scope="col" style="width: 100px;">
+          操作
+        </th>
+      </tr>
+      <tr class="text-center">
+        <td>
+          {{ chart.name }}
+        </td>
+        <td>
+          {{ chart.pair }}
+        </td>
+        <td>
+          {{ chart.rule }}
+        </td>
+        <td>
+          {% if chart.memo != None %}
+          {{ chart.memo }}
+          {% endif %}
+        </td>
+        <td>
+          <a class="btn btn-primary" href='{% url "Note:chart_edit" id %}'>編集</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+ </div>
 <div class="col" style="overflow-x: auto;">
   <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 </div>

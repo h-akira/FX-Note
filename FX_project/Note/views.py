@@ -1,11 +1,9 @@
+# 基本
 import sys
 import os
-import matplotlib.pyplot as plt
-import io
-import base64
+import pandas as pd
 import datetime
 from pytz import timezone
-import pandas as pd
 # django
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
@@ -18,10 +16,13 @@ from .forms import ChartForm
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import lib.chart as cha
 # チャート出力用
+import io
+import base64
 from matplotlib import use
 use("Agg")
 import mplfinance as mpf
 
+# html用
 history_header = [
   "アカウント",
   "注文番号",
@@ -174,8 +175,8 @@ def chart(request,id):
       "alpha":1
     },
     {
-      "data":df[["SMA_50"]],
-      "color":"y",
+      "data":df[["SMA_5"]],
+      "color":"#bc763c",
       "alpha":1
     },
     {
@@ -184,8 +185,8 @@ def chart(request,id):
       "alpha":1
     },
     {
-      "data":df[["SMA_5"]],
-      "color":"#bc763c",
+      "data":df[["SMA_50"]],
+      "color":"y",
       "alpha":1
     }
   ]
@@ -198,6 +199,7 @@ def chart(request,id):
   context = {
     "id": id,
     "image_data": image_data,
+    "chart":_chart,
     "histories":histories, 
     "header":history_header, 
     "width":history_width,
@@ -208,9 +210,7 @@ def chart(request,id):
 
 @login_required
 def histories2edit(request):
-  # print(request.POST.getlist("register"))
   histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register")).order_by("-order_number","-order_datetime")
-  # dts = histories.values_list("execution_datetime"))
   dts = [i[0].timestamp() for i in histories.values_list("execution_datetime") if i[0] != None]
   if len(dts) == 0:
     dts = [i[0].timestamp() for i in histories.values_list("order_datetime") if i[0] != None]
@@ -230,7 +230,6 @@ def histories2edit(request):
     "minus_delta":100
   }
   form = ChartForm(initial=initial)
-  # print(request.POST.getlist["register"])
   context = {
     "histories":histories,
     "header":history_header,
@@ -268,7 +267,6 @@ def chart_add(request):
       obj = HistoryLinkTable(chart=latest_chart, history=history)
       obj.save()
     return chart_index(request)
-    # return index(request)
     # return redirect("Note:chart")
   else:
     print("not valid")
@@ -278,7 +276,6 @@ def chart_add(request):
 def chart_update(request,id):
   _chart = get_object_or_404(ChartTable, pk=id)
   form = ChartForm(request.POST, instance=_chart)
-  # form = ChartForm(request.POST, instance=article)
   if form.is_valid():
     form.save()
     return chart(request, id) 
