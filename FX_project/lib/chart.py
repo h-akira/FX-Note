@@ -87,6 +87,10 @@ def add_BBands(df,period=20,nbdev=2,matype=0, name={"up":"bb_up", "middle":"bb_m
   df[name['down']]=bb_down
   return df
 
+def add_SMA(df, period, name):
+  df[name]=talib.SMA(df["Close"], timeperiod=period)
+  return df
+
 def resample(df, rule):
   # 1分足からN分足など変換する
   # ruluは5Tなど
@@ -99,7 +103,7 @@ def resample(df, rule):
   df = df.dropna(how="any")
   return df
 
-def gen_chart(df,transaction_start=None,transaction_end=None,hlines=None,vlines=None,lines=None, style=None, savefig=None,figsize=(2,1),png=False, dpi=200):
+def gen_chart(df,transaction_start=None,transaction_end=None,max_value=None, min_value=None, hlines=None,vlines=None,lines=None, style=None, savefig=None,figsize=(2,1),png=False, dpi=200):
   # hlinesとvlinseは辞書型
   # 例: {'hlines':[136.28,136.32],'colors':['g','r'],'linewidths'=[1,1]}
   # linesは辞書型を要素とするリスト
@@ -126,14 +130,12 @@ def gen_chart(df,transaction_start=None,transaction_end=None,hlines=None,vlines=
       transaction_end=pd.Timestamp(transaction_end.astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
       # transaction_end=pd.Timestamp(transaction_end.strftime("%Y-%m-%d %H:%M"), tz=timezone("Asia/Tokyo"))
     dates_df = pd.DataFrame(df.index)
-    # print("*********************")
-    # print(transaction_start)
-    # print(transaction_end)
-    # print("*********************")
-    y1value = df['Close'].max()
-    y2value = df['Low'].min()
+    if max_value == None:
+      max_value = df['Close'].max()
+    if min_value == None:
+      min_value = df['Low'].min()
     where_values = pd.notnull(dates_df[(dates_df>=transaction_start)&(dates_df<=transaction_end)])['date'].values
-    plot_args["fill_between"] = dict(y1=y1value, y2=y2value, where=where_values, alpha=0.2) 
+    plot_args["fill_between"] = dict(y1=max_value, y2=min_value, where=where_values, alpha=0.3) 
   if lines != None:
     plot_args["addplot"] = [mpf.make_addplot(**line_args) for line_args in lines]
   # if "bb_up" in df.columns and "bb_middle" in df.columns and "bb_down" in df.columns:

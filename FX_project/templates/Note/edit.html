@@ -5,7 +5,7 @@
 {# <form class="" action="{% url 'Note:chart_generate' %}" method="post" enctype="multipart/form-data"> #}
 {% if type == "add" %}
 <form class="" action="{% url 'Note:chart_add' %}" method="post">
-{% elif type == "update %"}
+{% elif type == "update" %}
 <form class="" action="{% url 'Note:chart_update' id %}" method="post">
 {% else %}
 <form class="" action="{% url 'Note:chart_add' %}" method="post">
@@ -15,6 +15,12 @@
   {% if table %}
   {% include 'Note/history_table_jp.html' %}
   {% endif %}
+  {% if type == "add" %}
   <button type="submit" class="btn btn-primary btn-sm">登録</button>
+  {% elif type == "update" %}
+  <button type="submit" class="btn btn-primary btn-sm">更新</button>
+  {% else %}
+  <button type="submit" class="btn btn-primary btn-sm">登録</button>
+  {% endif %}
 </form>
 {% endblock content %}

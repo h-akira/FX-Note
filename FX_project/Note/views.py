@@ -97,9 +97,6 @@ def chart(request,id):
   if len(execution) >= 2:
     start = min(execution)
     end = max(execution)
-    print("[[[[[[[[[[[[]]]]]]]]]]]]")
-    print(start)
-    print("[[[[[[[[[[[[]]]]]]]]]]]]")
   else:
     start = None
     end = None
@@ -112,16 +109,18 @@ def chart(request,id):
       (_chart.standard_datetime+datetime.timedelta(days=1)).date()
     ]
   ) 
-  df = cha.add_BBands(df,20,2,0)
+  # 足を変換
+  df = cha.resample(df, _chart.rule)
+  # ボリンジャーバンドを追加
+  df = cha.add_BBands(df,20,2,0,name={"up":"bb_up_2", "middle":"bb_middle", "down":"bb_down_2"})
+  df = cha.add_BBands(df,20,3,0,name={"up":"bb_up_3", "middle":"bb_middle", "down":"bb_down_3"})
+  # 移動平均線を追加
+  df = cha.add_SMA(df, 5, "SMA_5") 
+  df = cha.add_SMA(df, 20, "SMA_20") 
+  df = cha.add_SMA(df, 50, "SMA_50") 
+  print(df)
   # 最もstandard_datetimeに近い列の周辺のデータを取得する
   target_datetime = pd.Timestamp(_chart.standard_datetime)
-  # target_datetime = pd.Timestamp(_chart.standard_datetime).tz_localize(None)
-  # target_datetime = pd.Timestamp(_chart.standard_datetime).tz_convert(timezone('Asia/Tokyo'))
-  # print("-------------------")
-  # print(pd.DataFrame(df.index).date.dt)
-  # print("-------------------")
-  # nearest_index = (pd.DataFrame(df.index).date.dt.tz_localize(timezone("Asia/Tokyo")) - target_datetime).abs().idxmin()
-  # print(nearest_index)
   nearest_index = (pd.DataFrame(df.index) - target_datetime).abs().idxmin().date
   start_index = max(0, nearest_index - _chart.minus_delta)
   end_index = min(nearest_index + _chart.plus_delta, len(df) - 1)
@@ -129,10 +128,15 @@ def chart(request,id):
   # 横線
   hlines=dict(hlines=[],colors=[],linewidths=[])
   for history in histories:
-    if history.execution_rate != None:
-      hlines["hlines"].append(history.execution_rate)
-      hlines["colors"].append("g")
-      hlines["linewidths"].append(1)
+    if history.order_rate != None:
+      hlines["hlines"].append(history.order_rate)
+      if history.buy_sell == "buy":
+        hlines["colors"].append("r")
+      else:
+        hlines["colors"].append("b")
+        # hlines["colors"].append("#2ca9e1")
+        # hlines["colors"].append("00bfff")
+      hlines["linewidths"].append(0.1)
   # 画像の出力先
   buf = io.BytesIO()
   # チャートを作成
@@ -140,23 +144,42 @@ def chart(request,id):
     df,
     transaction_start=start,
     transaction_end=end,
-    # hlines=dict(hlines=[136.28,136.6],colors=["g","g"],linewidths=[0.1,0.1]),
+    max_value = df["bb_up_3"].max(),
+    min_value = df["bb_down_3"].min(),
     hlines=hlines,
     lines=[
       {
-        "data":df[["bb_up","bb_down"]],
+        "data":df[["bb_up_2","bb_down_2"]],
         "linestyle":"dashdot",
-        "color":"r",
-        "alpha":0.5
+        "color":"#aa4c8f",
+        "alpha":1
       },
       {
-        "data":df[["bb_middle"]],
-        "color":"b",
-        "alpha":0.5
+        "data":df[["bb_up_3","bb_down_3"]],
+        "linestyle":"dashdot",
+        "color":"#96514d",
+        "alpha":1
+      },
+      {
+        "data":df[["SMA_50"]],
+        "color":"#bc763c",
+        "alpha":1
+      },
+      {
+        "data":df[["SMA_20"]],
+        "color":"g",
+        "alpha":1
+      },
+      {
+        "data":df[["SMA_5"]],
+        "color":"y",
+        "alpha":1
       }
     ],
     savefig={'fname':buf,'dpi':100},
-    figsize=(20,7)
+    figsize=(15,7),
+    # style="binance"
+    style="nightclouds"
   )
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
   # 渡すもの
