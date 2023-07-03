@@ -123,7 +123,6 @@ def gen_chart(df,transaction_start=None,transaction_end=None,max_value=None, min
       transaction_end=pd.Timestamp(transaction_end,tz=timezone("Asia/Tokyo"))
     elif transaction_end.__class__ == datetime.datetime:
       transaction_end=pd.Timestamp(transaction_end.astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
-      # transaction_end=pd.Timestamp(transaction_end.strftime("%Y-%m-%d %H:%M"), tz=timezone("Asia/Tokyo"))
     dates_df = pd.DataFrame(df.index)
     if max_value == None:
       max_value = df['Close'].max()
@@ -133,11 +132,6 @@ def gen_chart(df,transaction_start=None,transaction_end=None,max_value=None, min
     plot_args["fill_between"] = dict(y1=max_value, y2=min_value, where=where_values, alpha=0.3) 
   if lines != None:
     plot_args["addplot"] = [mpf.make_addplot(**line_args) for line_args in lines]
-  # if "bb_up" in df.columns and "bb_middle" in df.columns and "bb_down" in df.columns:
-    # plot_args["addplot"] = [
-      # mpf.make_addplot(df[['bb_up', 'bb_down']],linestyle='dashdot', color='r', alpha=0.5),
-      # mpf.make_addplot(df['bb_middle'], color='b', alpha=0.5)
-    # ]
   if style != None:
     plot_args["style"] = style
   if hlines != None:

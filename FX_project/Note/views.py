@@ -1,19 +1,26 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
-from django.db.models import Avg
-from django.contrib.auth.decorators import login_required
-import lib.chart as cha
 import matplotlib.pyplot as plt
 import io
 import base64
 import datetime
-import pandas as pd
 from pytz import timezone
+import pandas as pd
+# django
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from django.db.models import Avg
+from django.contrib.auth.decorators import login_required
+# modelsとforms
 from .models import HistoryTable, ChartTable, HistoryLinkTable
 from .forms import ChartForm
+# 独自関数
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import lib.chart as cha
+# チャート出力用
+from matplotlib import use
+use("Agg")
+import mplfinance as mpf
 
 history_header = [
   "アカウント",
@@ -89,18 +96,13 @@ def chart_index(request):
 
 @login_required
 def chart(request,id):
+  # 該当のchartのデータを取得
   _chart = get_object_or_404(ChartTable, pk=id)
+  # 該当のチャートと紐付けられている取引履歴を取得
   histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
   histories = sorted(histories, reverse=True, key=lambda x: x.id)
   histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
-  execution = [i.execution_datetime for i in histories if i.execution_datetime != None]
-  if len(execution) >= 2:
-    start = min(execution)
-    end = max(execution)
-  else:
-    start = None
-    end = None
-  # _link = get_object_or_404(HistoryLinkTable, pk=1)
+  # 為替データを取得
   df = cha.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair=_chart.pair,
@@ -118,13 +120,17 @@ def chart(request,id):
   df = cha.add_SMA(df, 5, "SMA_5") 
   df = cha.add_SMA(df, 20, "SMA_20") 
   df = cha.add_SMA(df, 50, "SMA_50") 
-  print(df)
   # 最もstandard_datetimeに近い列の周辺のデータを取得する
   target_datetime = pd.Timestamp(_chart.standard_datetime)
   nearest_index = (pd.DataFrame(df.index) - target_datetime).abs().idxmin().date
   start_index = max(0, nearest_index - _chart.minus_delta)
   end_index = min(nearest_index + _chart.plus_delta, len(df) - 1)
   df = df.iloc[start_index:end_index+1]
+  
+  ### チャートを作成
+  plot_args = {
+    "type":"candle",
+  }
   # 横線
   hlines=dict(hlines=[],colors=[],linewidths=[])
   for history in histories:
@@ -135,52 +141,60 @@ def chart(request,id):
       else:
         hlines["colors"].append("b")
       hlines["linewidths"].append(0.1)
-  # 画像の出力先
-  buf = io.BytesIO()
-  # チャートを作成
-  cha.gen_chart(
-    df,
-    transaction_start=start,
-    transaction_end=end,
+  plot_args["hlines"] = hlines
+  # 取引期間
+  execution = [i.execution_datetime for i in histories if i.execution_datetime != None]
+  if len(execution) >= 2:
+    transaction_start=pd.Timestamp(min(execution).astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
+    transaction_end=pd.Timestamp(max(execution).astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
+    dates_df = pd.DataFrame(df.index)
+    where_values = pd.notnull(dates_df[(dates_df>=transaction_start)&(dates_df<=transaction_end)])['date'].values
     max_value = df["bb_up_3"].max(),
     min_value = df["bb_down_3"].min(),
-    hlines=hlines,
-    lines=[
-      {
-        "data":df[["bb_up_2","bb_down_2"]],
-        "linestyle":"dashdot",
-        "color":"#aa4c8f",
-        "alpha":1
-      },
-      {
-        "data":df[["bb_up_3","bb_down_3"]],
-        "linestyle":"dashdot",
-        "color":"#96514d",
-        "alpha":1
-      },
-      {
-        "data":df[["SMA_50"]],
-        "color":"y",
-        "alpha":1
-      },
-      {
-        "data":df[["SMA_20"]],
-        "color":"#3eb370",
-        "alpha":1
-      },
-      {
-        "data":df[["SMA_5"]],
-        "color":"#bc763c",
-        "alpha":1
-      }
-    ],
-    savefig={'fname':buf,'dpi':100},
-    figsize=(18,8),
-    # style="binance"
-    style="nightclouds"
-  )
+    plot_args["fill_between"] = dict(y1=max_value, y2=min_value, where=where_values, alpha=0.3) 
+  # スタイル
+  plot_args["style"] ="nightclouds"
+  # 画像の大きさ
+  plot_args["figsize"] = (19,8)
+  # 画像の出力先
+  buf = io.BytesIO()
+  plot_args["savefig"] = {'fname':buf,'dpi':100}
+  # 線
+  lines=[
+    {
+      "data":df[["bb_up_2","bb_down_2"]],
+      "linestyle":"dashdot",
+      "color":"#aa4c8f",
+      "alpha":1
+    },
+    {
+      "data":df[["bb_up_3","bb_down_3"]],
+      "linestyle":"dashdot",
+      "color":"#96514d",
+      "alpha":1
+    },
+    {
+      "data":df[["SMA_50"]],
+      "color":"y",
+      "alpha":1
+    },
+    {
+      "data":df[["SMA_20"]],
+      "color":"#3eb370",
+      "alpha":1
+    },
+    {
+      "data":df[["SMA_5"]],
+      "color":"#bc763c",
+      "alpha":1
+    }
+  ]
+  plot_args["addplot"] = [mpf.make_addplot(**line_args) for line_args in lines]
+  # 出力
+  mpf.plot(df, **plot_args)
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-  # 渡すもの
+
+  ### 渡すもの
   context = {
     "id": id,
     "image_data": image_data,
