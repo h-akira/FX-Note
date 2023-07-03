@@ -65,8 +65,8 @@ def history(request):
 
 @login_required
 def chart_index(request):
-  charts = ChartTable.objects.filter(user=request.user)
-  links = [HistoryLinkTable.objects.filter(chart=i).count() for i in charts]
+  _charts = ChartTable.objects.filter(user=request.user)
+  links = [HistoryLinkTable.objects.filter(chart=i).count() for i in _charts]
   header = [
     "登録名",
     "通貨ペア",
@@ -83,7 +83,7 @@ def chart_index(request):
   100,  # 新規+決済
   100  # 操作
   ]
-  context = {"charts":charts, "links":links, "header":header, "width":width, "box":False, "checked":False}
+  context = {"charts":_charts, "links":links, "header":header, "width":width, "box":False, "checked":False}
   return render(request, 'Note/chart_index.html', context)
 
 @login_required
@@ -138,32 +138,20 @@ def chart(request,id):
       }
     ],
     savefig={'fname':buf,'dpi':100},
-    figsize=(10,5)
+    figsize=(20,7)
   )
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+  # 渡すもの
   context = {
+    "id": id,
     "image_data": image_data,
     "histories":histories, 
     "header":history_header, 
     "width":history_width,
     "box":False, 
-    "checked":False
+    "checked":False,
   }
   return render(request, 'Note/chart.html', context)
-  # return render(
-  #   request,
-  #   'Note/chart.html',
-  #   {
-  #     "image_date": base64.b64encode(buf.getvalue()).decode("utf-8"),
-  #     "histories":histories, 
-  #     "header":history_header, 
-  #     "width":history_width,
-  #     "box":False, 
-  #     "checked":False
-  #   }
-  # )
-  #
-  # buf.close()
 
 @login_required
 def histories2edit(request):
@@ -185,28 +173,65 @@ def histories2edit(request):
     "user":request.user,
     "pair":pairs[0],
     "standard_datetime": ave,
-    "plus_delta":50,
-    "minus_delta":50
+    "plus_delta":100,
+    "minus_delta":100
   }
   form = ChartForm(initial=initial)
   # print(request.POST.getlist["register"])
-  context = {"histories":histories, "header":history_header, "width":history_width, "form":form, "box":True, "checked":True}
+  context = {
+    "histories":histories,
+    "header":history_header,
+    "width":history_width,
+    "form":form,
+    "table":True,
+    "box":True, 
+    "checked":True,
+    "type":"add"
+  }
+  return render(request, 'Note/edit.html', context)
+
+@login_required
+def chart_edit(request, id):
+  _chart = get_object_or_404(ChartTable, pk=id)
+  form = ChartForm(instance=_chart)
+  context = {
+    "id":id,
+    "form":form,
+    "table":False,
+    "box":False, 
+    "checked":False,
+    "type":"update"
+  }
   return render(request, 'Note/edit.html', context)
 
 @login_required
 def chart_add(request):
-    form = ChartForm(request.POST)
-    histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
-    print(histories)
-    if form.is_valid():
-      latest_chart = form.save()
-      for history in histories:
-        obj = HistoryLinkTable(chart=latest_chart, history=history)
-        obj.save()
-      return chart_index(request)
-      # return index(request)
-      # return redirect("Note:chart")
-    else:
-      print("not valid")
-      return redirect("Note:history")
+  form = ChartForm(request.POST)
+  histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
+  print(histories)
+  if form.is_valid():
+    latest_chart = form.save()
+    for history in histories:
+      obj = HistoryLinkTable(chart=latest_chart, history=history)
+      obj.save()
+    return chart_index(request)
+    # return index(request)
+    # return redirect("Note:chart")
+  else:
+    print("not valid")
+    return redirect("Note:history")
+
+@login_required
+def chart_update(request,id):
+  _chart = get_object_or_404(ChartTable, pk=id)
+  form = ChartForm(request.POST, instance=_chart)
+  # form = ChartForm(request.POST, instance=article)
+  if form.is_valid():
+    form.save()
+    return chart(request, id) 
+  else:
+    return redirect("Note:chart",id)
+
+
+
 

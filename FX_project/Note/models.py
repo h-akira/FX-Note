@@ -40,12 +40,12 @@ class HistoryTable(models.Model):
   
 class ChartTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
-  name = models.CharField(max_length=255)
+  name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
   pair = models.CharField(max_length=10)
   rule = models.CharField(max_length=10, choices=RULE)
   standard_datetime = models.DateTimeField()
-  minus_delta = models.IntegerField(default=50)
-  plus_delta = models.IntegerField(default=50)
+  minus_delta = models.IntegerField(default=100)
+  plus_delta = models.IntegerField(default=100)
   memo = models.CharField(max_length=511,null=True, blank=True)
 
 class HistoryLinkTable(models.Model):
