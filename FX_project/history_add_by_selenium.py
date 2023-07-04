@@ -15,6 +15,7 @@ import django
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.common.by import By
 from time import sleep
 import datetime
 import json
@@ -104,29 +105,41 @@ def main():
   # seleniumの準備
   driver_options = Options()
   if options.headless:
-    options.add_argument('--headless')
-  driver = webdriver.Chrome(info["selenium"]["driver"], options=driver_options)
+    driver_options.add_argument('--headless')
+  if "driver" not in info["selenium"].keys():
+    driver = webdriver.Chrome(driver_options)
+  elif not info["selenium"]["driver"]:
+    driver = webdriver.Chrome(driver_options)
+  else:
+    driver = webdriver.Chrome(info["selenium"]["driver"], options=driver_options)
   # アクセス
   driver.get(info["selenium"]["url"])
   sleep(options.sleep)
   # ログイン
-  driver.find_element_by_id("j_username").send_keys(info["selenium"]["username"])
-  driver.find_element_by_id("j_password").send_keys(info["selenium"]["password"])
+  # driver.find_element_by_id("j_username").send_keys(info["selenium"]["username"])
+  driver.find_element(By.ID, "j_username").send_keys(info["selenium"]["username"])
+  # driver.find_element_by_id("j_password").send_keys(info["selenium"]["password"])
+  driver.find_element(By.ID, "j_password").send_keys(info["selenium"]["password"])
   sleep(options.sleep)
-  driver.find_element_by_name("LoginForm").click()
+  # driver.find_element_by_name("LoginForm").click()
+  driver.find_element(By.NAME, "LoginForm").click()
   sleep(options.sleep)
   # デモでない場合は全体のページからFXのページに移動
   if not options.demo:
-    driver.find_element_by_id("fxneoMenu").find_element_by_tag_name("a").click()
+    # driver.find_element_by_id("fxneoMenu").find_element_by_tag_name("a").click()
+    driver.find_element(By.ID, "fxneoMenu").find_element(By.TAG_NAME, "a").click()
     sleep(options.sleep)
   # 「注文・取引一覧」
-  driver.find_element_by_name("orderHistory").find_element_by_tag_name("a").click()
+  # driver.find_element_by_name("orderHistory").find_element_by_tag_name("a").click()
+  driver.find_element(By.NAME, "orderHistory").find_element(By.TAG_NAME, "a").click()
   sleep(options.sleep)
   # 表示件数を200件にする
-  dropdown = driver.find_element_by_id('row-limit-selection')
+  # dropdown = driver.find_element_by_id('row-limit-selection')
+  dropdown = driver.find_element(By.ID, 'row-limit-selection')
   select = Select(dropdown)
   select.select_by_index(2)
-  driver.find_element_by_id("search-button").find_element_by_tag_name("a").click()
+  # driver.find_element_by_id("search-button").find_element_by_tag_name("a").click()
+  driver.find_element(By.ID, "search-button").find_element(By.TAG_NAME, "a").click()
   sleep(options.sleep)
 
   # データベースに追加
@@ -134,7 +147,8 @@ def main():
     done = add(driver.page_source, user=user, account=info["django"]["account"], tz=tz, HistoryTable=HistoryTable)
     if done:
       break
-    span_elements = driver.find_elements_by_tag_name('span')
+    # span_elements = driver.find_elements_by_tag_name('span')
+    span_elements = driver.find_elements(By.TAG_NAME, 'span')
     for span_element in span_elements:
       if span_element.text == ">":
         span_element.click()
