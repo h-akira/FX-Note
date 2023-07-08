@@ -1,7 +1,15 @@
 {
   "selenium":{
     "driver":"/usr/bin/chromedriver",
-    "url" : "https://sec-sso.click-sec.com/loginweb/sessionInvalidate",
+    "url" : {
+      "login":"https://sec-sso.click-sec.com/loginweb/sessionInvalidate",
+      "data":{
+        "USD/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=21&n=USDJPY",
+        "EUR/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=22&n=EURJPY",
+        "GBP/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=23&n=GBPJPY",
+        "EUR/USD":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=31&n=EURUSD"
+      }
+    },
     "username" : "123456789",
     "password" : "hogehoge"
   },

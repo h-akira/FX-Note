@@ -113,7 +113,7 @@ def main():
   else:
     driver = webdriver.Chrome(info["selenium"]["driver"], options=driver_options)
   # アクセス
-  driver.get(info["selenium"]["url"])
+  driver.get(info["selenium"]["url"]["login"])
   sleep(options.sleep)
   # ログイン
   # driver.find_element_by_id("j_username").send_keys(info["selenium"]["username"])

@@ -1,5 +1,6 @@
-# Setting
-Install packages:
+## Setting
+### Install
+Python packages:
 ```
 pip3 install django
 pip3 install django-boost
@@ -7,7 +8,7 @@ pip3 install pandas
 pip3 install numpy
 pip3 install mplfinance
 ```
-Install `TA-Lib`:
+`TA-Lib`:
 ```
 # Mac
 brew install ta-lib
@@ -20,8 +21,13 @@ sudo make
 sudo make install
 pip3 install TA-Lib
 ```
+Others:
+```
+# Ubuntu
+sudo apt install unzip
+```
 
-# Generate and set SECRET KEY
+### Generate and set SECRET KEY
 Launch a shell:
 ```
 python3 manage.py shell
