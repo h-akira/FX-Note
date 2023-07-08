@@ -36,6 +36,3 @@ Then copy `settings_local_sample.py` as `secret_local.py` and replace `{}` in se
 
 
 
-
-
-
