@@ -14,7 +14,8 @@ from .models import HistoryTable, ChartTable, HistoryLinkTable
 from .forms import ChartForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import lib.chart as cha
+import lib.chart
+import lib.chart_settings
 # チャート出力用
 import io
 import base64
@@ -104,7 +105,7 @@ def chart(request,id):
   histories = sorted(histories, reverse=True, key=lambda x: x.id)
   histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
   # 為替データを取得
-  df = cha.GMO_dir2DataFrame(
+  df = lib.chart.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair=_chart.pair,
     date_range=[
@@ -113,14 +114,9 @@ def chart(request,id):
     ]
   ) 
   # 足を変換
-  df = cha.resample(df, _chart.rule)
-  # ボリンジャーバンドを追加
-  df = cha.add_BBands(df,20,2,0,name={"up":"bb_up_2", "middle":"bb_middle", "down":"bb_down_2"})
-  df = cha.add_BBands(df,20,3,0,name={"up":"bb_up_3", "middle":"bb_middle", "down":"bb_down_3"})
-  # 移動平均線を追加
-  df = cha.add_SMA(df, 5, "SMA_5") 
-  df = cha.add_SMA(df, 20, "SMA_20") 
-  df = cha.add_SMA(df, 50, "SMA_50") 
+  df = lib.chart.resample(df, _chart.rule)
+  # テクニカル指標を追加
+  df = lib.chart_settings.add_technical_columns(df)
   # 最もstandard_datetimeに近い列の周辺のデータを取得する
   target_datetime = pd.Timestamp(_chart.standard_datetime)
   nearest_index = (pd.DataFrame(df.index) - target_datetime).abs().idxmin().date
@@ -129,9 +125,10 @@ def chart(request,id):
   df = df.iloc[start_index:end_index+1]
   
   ### チャートを作成
-  plot_args = {
-    "type":"candle",
-  }
+  # 共通部分
+  plot_args = lib.chart_settings.plot_args.copy()
+  # テクニカル指標を追加
+  plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
   # 横線
   hlines=dict(hlines=[],colors=[],linewidths=[])
   for history in histories:
@@ -153,44 +150,11 @@ def chart(request,id):
     max_value = df["bb_up_3"].max(),
     min_value = df["bb_down_3"].min(),
     plot_args["fill_between"] = dict(y1=max_value, y2=min_value, where=where_values, alpha=0.3) 
-  # スタイル
-  plot_args["style"] ="nightclouds"
   # 画像の大きさ
   plot_args["figsize"] = (19,8)
   # 画像の出力先
   buf = io.BytesIO()
   plot_args["savefig"] = {'fname':buf,'dpi':100}
-  # 線
-  lines=[
-    {
-      "data":df[["bb_up_2","bb_down_2"]],
-      "linestyle":"dashdot",
-      "color":"#aa4c8f",
-      "alpha":1
-    },
-    {
-      "data":df[["bb_up_3","bb_down_3"]],
-      "linestyle":"dashdot",
-      "color":"#96514d",
-      "alpha":1
-    },
-    {
-      "data":df[["SMA_5"]],
-      "color":"#bc763c",
-      "alpha":1
-    },
-    {
-      "data":df[["SMA_20"]],
-      "color":"#3eb370",
-      "alpha":1
-    },
-    {
-      "data":df[["SMA_50"]],
-      "color":"y",
-      "alpha":1
-    }
-  ]
-  plot_args["addplot"] = [mpf.make_addplot(**line_args) for line_args in lines]
   # 出力
   mpf.plot(df, **plot_args)
   image_data = base64.b64encode(buf.getvalue()).decode("utf-8")

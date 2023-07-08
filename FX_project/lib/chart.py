@@ -76,7 +76,6 @@ def GMO_csv2DataFrame(file_name,BID_ASK="BID"):
   df["date"] = pd.to_datetime(df["date"])
   df.set_index("date", inplace=True)
   df.index = df.index.tz_localize(timezone('Asia/Tokyo'))
-  print(df)
   return df
 
 def add_BBands(df,period=20,nbdev=2,matype=0, name={"up":"bb_up", "middle":"bb_middle", "down":"bb_down"}):
