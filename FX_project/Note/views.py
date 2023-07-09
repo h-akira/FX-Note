@@ -97,13 +97,15 @@ def chart_index(request):
   return render(request, 'Note/chart_index.html', context)
 
 @login_required
-def chart(request,id):
+def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
   # 該当のchartのデータを取得
-  _chart = get_object_or_404(ChartTable, pk=id)
+  if _chart == None:
+    _chart = get_object_or_404(ChartTable, pk=id)
   # 該当のチャートと紐付けられている取引履歴を取得
-  histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
-  histories = sorted(histories, reverse=True, key=lambda x: x.id)
-  histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
+  if histories == None:
+    histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
+    histories = sorted(histories, reverse=True, key=lambda x: x.id)
+    histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
   # 為替データを取得
   df = lib.chart.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
@@ -157,20 +159,38 @@ def chart(request,id):
   plot_args["savefig"] = {'fname':buf,'dpi':100}
   # 出力
   mpf.plot(df, **plot_args)
-  image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+  # image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+  # return HttpResponse(image_data, content_type='image/png;base64')
+  buf.seek(0)
+  if _HttpResponse:
+    return HttpResponse(buf, content_type='image/png')
+  else:
+    image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return image_data
+    # htmldjangoにおいて以下のように記述することで出力できる:
+    # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 
+@login_required
+def chart_detail(request, id):
+  # 該当のchartのデータを取得
+  _chart = get_object_or_404(ChartTable, pk=id)
+  # 該当のチャートと紐付けられている取引履歴を取得
+  histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
+  histories = sorted(histories, reverse=True, key=lambda x: x.id)
+  histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
+  image_data = chart_image(request, id, _HttpResponse=False, _chart=_chart, histories=histories)
   ### 渡すもの
   context = {
     "id": id,
-    "image_data": image_data,
     "chart":_chart,
     "histories":histories, 
+    "image_data":image_data,
     "header":history_header, 
     "width":history_width,
     "box":False, 
     "checked":False,
   }
-  return render(request, 'Note/chart.html', context)
+  return render(request, 'Note/chart_detail.html', context)
 
 @login_required
 def histories2edit(request):
@@ -230,7 +250,7 @@ def chart_add(request):
     for history in histories:
       obj = HistoryLinkTable(chart=latest_chart, history=history)
       obj.save()
-    return chart_index(request)
+    return chart_detail(request, latest_chart.id)
     # return redirect("Note:chart")
   else:
     print("not valid")
@@ -242,7 +262,7 @@ def chart_update(request,id):
   form = ChartForm(request.POST, instance=_chart)
   if form.is_valid():
     form.save()
-    return chart(request, id) 
+    return chart_detail(request, id) 
   else:
     return redirect("Note:chart",id)
 
