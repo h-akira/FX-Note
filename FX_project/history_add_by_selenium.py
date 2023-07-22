@@ -6,6 +6,7 @@
 # Import
 import sys
 import os
+import stat
 import numpy
 import pandas as pd
 from pytz import timezone
@@ -86,6 +87,9 @@ def add(html,user,account,tz,HistoryTable):
 def main():
   # ArgumentParser
   options = parse_args()
+  # 権限を確認（600しか認めない）
+  if stat.filemode(os.stat(options.file).st_mode) != "-rw-------":
+    raise PermissionError
   # jsonを読む
   info = json.load(open(options.file, mode="r", encoding=options.encoding))
   if not info["selenium"]["password"]:
