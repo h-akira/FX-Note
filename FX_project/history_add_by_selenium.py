@@ -17,6 +17,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService
 from time import sleep
 import datetime
 import json
@@ -115,7 +116,9 @@ def main():
   elif not info["selenium"]["driver"]:
     driver = webdriver.Chrome(driver_options)
   else:
-    driver = webdriver.Chrome(info["selenium"]["driver"], options=driver_options)
+    service = ChromeService(executable_path=info["selenium"]["driver"])
+    driver = webdriver.Chrome(service=service, options=driver_options)
+    # driver = webdriver.Chrome(info["selenium"]["driver"], options=driver_options)
   # アクセス
   driver.get(info["selenium"]["url"]["login"])
   sleep(options.sleep)
