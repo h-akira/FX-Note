@@ -143,17 +143,29 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
       hlines["linewidths"].append(0.1)
   plot_args["hlines"] = hlines
   # 取引期間
-  execution = [i.execution_datetime for i in histories if i.execution_datetime != None]
-  if len(execution) >= 2:
-    transaction_start=pd.Timestamp(min(execution).astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
-    transaction_end=pd.Timestamp(max(execution).astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
-    dates_df = pd.DataFrame(df.index)
-    where_values = pd.notnull(dates_df[(dates_df>=transaction_start)&(dates_df<=transaction_end)])['date'].values
-    max_value = df["bb_up_3"].max(),
-    min_value = df["bb_down_3"].min(),
-    plot_args["fill_between"] = dict(y1=max_value, y2=min_value, where=where_values, alpha=0.3) 
+  # execution = [i.execution_datetime for i in histories if i.execution_datetime != None]
+  # if len(execution) >= 2:
+  #   transaction_start=pd.Timestamp(min(execution).astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
+  #   transaction_end=pd.Timestamp(max(execution).astimezone(timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M"),tz=timezone("Asia/Tokyo"))
+  #   dates_df = pd.DataFrame(df.index)
+  #   where_values = pd.notnull(dates_df[(dates_df>=transaction_start)&(dates_df<=transaction_end)])['date'].values
+  #   max_value = df["bb_up_3"].max(),
+  #   min_value = df["bb_down_3"].min(),
+  #   plot_args["fill_between"] = dict(y1=max_value, y2=min_value, where=where_values, alpha=0.3) 
+  # 縦線
+  vlines=dict(vlines=[],colors=[],linewidths=[])
+  for history in histories:
+    if history.execution_datetime != None and history.state != "canceled" and history.order_rate != None:
+      vlines["vlines"].append(history.execution_datetime)
+      if history.buy_sell == "buy":
+        vlines["colors"].append("r")
+      else:
+        vlines["colors"].append("b")
+      vlines["linewidths"].append(0.1)
+  plot_args["vlines"] = vlines
   # 画像の大きさ
   plot_args["figsize"] = (19,8)
+  # plot_args["figratio"] = (10,6)
   # 画像の出力先
   buf = io.BytesIO()
   plot_args["savefig"] = {'fname':buf,'dpi':100}
