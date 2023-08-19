@@ -3,7 +3,7 @@
 <div class="table-responsive">
   <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
     <tbody>
-      <tr class="table-warning text-center">
+      <tr class="table-light text-center border-dark">
         {% for h,w in header|zip:width %}
         <th scope="col" style="width: {{ w }}px;">
             {{ h }}
@@ -20,7 +20,13 @@
         {% endif %}
       </tr>
       {% for history in histories %}
+      {% if history.kind == "settlement" %}
+      <tr class="text-center table-success border-dark">
+      {% elif history.kind == "new" %}
+      <tr class="text-center table-warning border-dark">
+      {% else %}
       <tr class="text-center">
+      {% endif %}
         <td>
           {{ history.account }}
         </td>
@@ -55,7 +61,15 @@
           {% endif %}
         </td>
         <td>
+          {% if history.order_type == "market" %}
+          成行
+          {% elif history.order_type == "limit" %}
+          指値
+          {% elif history.order_type == "stop" %}
+          逆指値
+          {% else %}
           {{ history.order_type }}
+          {% endif %}
         </td>
         <td>
           {{ history.quantity }}
@@ -89,7 +103,15 @@
           {{ history.order_rate }}
         </td>
         <td>
+          {% if history.condition == "market" %}
+          成行
+          {% elif history.condition == "limit" %}
+          指値
+          {% elif history.condition == "stop" %}
+          逆指値
+          {% else %}
           {{ history.condition }}
+          {% endif %}
         </td>
         <td>
           {{ history.execution_datetime|date:"Y-m-d H:i:s" }}

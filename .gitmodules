@@ -1,0 +1,6 @@
+[submodule "FX_project/data"]
+	path = FX_project/data
+	url = git@github.com:h-akira/FX-Data.git
+[submodule "FX_project/lib"]
+	path = FX_project/lib
+	url = git@github.com:h-akira/Fx-Lib.git
