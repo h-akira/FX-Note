@@ -7,6 +7,12 @@ pip3 install django-boost
 pip3 install pandas
 pip3 install numpy
 pip3 install mplfinance
+pip3 install selenium
+```
+Setting selenium:
+```
+# Ubuntu
+sudo apt install python3-selenium
 ```
 `TA-Lib`:
 ```
