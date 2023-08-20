@@ -8,4 +8,5 @@ class ChartForm(forms.ModelForm):
     fields = ('name', 'pair', 'rule',"standard_datetime", "minus_delta", "plus_delta", "memo")
     widgets = {
       'memo': forms.Textarea(attrs={'rows': 10, 'cols': 50}),
+      'standard_datetime': forms.DateTimeInput(attrs={"type": "datetime-local"})
     }
