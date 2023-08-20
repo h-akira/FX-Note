@@ -258,11 +258,14 @@ def chart_add(request):
   histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
   print(histories)
   if form.is_valid():
-    latest_chart = form.save()
+    # latest_chart = form.save()
+    instance = form.save(commit=False)  # まだDBには保存しない
+    instance.user = request.user  # ログインしているユーザー情報をセット
+    instance.save()  # DBに保存
     for history in histories:
-      obj = HistoryLinkTable(chart=latest_chart, history=history)
+      obj = HistoryLinkTable(chart=instance, history=history)
       obj.save()
-    return chart_detail(request, latest_chart.id)
+    return chart_detail(request, instance.id)
     # return redirect("Note:chart")
   else:
     print("not valid")
