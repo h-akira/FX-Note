@@ -75,7 +75,7 @@ def history(request):
 
 @login_required
 def chart_index(request):
-  _charts = ChartTable.objects.filter(user=request.user)
+  _charts = ChartTable.objects.filter(user=request.user).order_by("-id")
   links = [HistoryLinkTable.objects.filter(chart=i).count() for i in _charts]
   header = [
     "登録名",
@@ -219,7 +219,7 @@ def histories2edit(request):
     raise Exception
   ave = datetime.datetime.fromtimestamp(sum(dts)/len(dts),tz=timezones[0])
   initial = {
-    "user":request.user,
+    # "user":request.user,
     "pair":pairs[0],
     "standard_datetime": ave,
     "plus_delta":100,
@@ -234,6 +234,28 @@ def histories2edit(request):
     "table":True,
     "box":True, 
     "checked":True,
+    "type":"add"
+  }
+  return render(request, 'Note/edit.html', context)
+
+@login_required
+def none2edit(request):
+  initial = {
+    # "user":request.user,
+    # "pair":pairs[0],
+    # "standard_datetime": ave,
+    "plus_delta":100,
+    "minus_delta":100
+  }
+  form = ChartForm(initial=initial)
+  context = {
+    # "histories":histories,
+    # "header":history_header,
+    # "width":history_width,
+    "form":form,
+    "table":False,
+    # "box":True, 
+    # "checked":True,
     "type":"add"
   }
   return render(request, 'Note/edit.html', context)
@@ -262,9 +284,10 @@ def chart_add(request):
     instance = form.save(commit=False)  # まだDBには保存しない
     instance.user = request.user  # ログインしているユーザー情報をセット
     instance.save()  # DBに保存
-    for history in histories:
-      obj = HistoryLinkTable(chart=instance, history=history)
-      obj.save()
+    if histories.exists():
+      for history in histories:
+        obj = HistoryLinkTable(chart=instance, history=history)
+        obj.save()
     return chart_detail(request, instance.id)
     # return redirect("Note:chart")
   else:
