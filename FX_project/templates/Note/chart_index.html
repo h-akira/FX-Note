@@ -3,7 +3,8 @@
 
 {% block title %}チャート{% endblock title %}
 {% block content %}
-<h1>チャート</h1>
+<h1>チャート</h1><nobr>
+<a href='{% url "Note:chart_create" %}' class="btn btn-success btn">新規作成</a>
 <div class="table-responsive">
   <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
     <tbody>
