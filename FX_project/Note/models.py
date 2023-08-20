@@ -9,6 +9,7 @@ STATE = (("accepted","受付済"),("executed","約定済"),("canceled","取消�
 CONDITION = (("limit","指値"),("stop","逆指値"),("market","成行"))
 # RULE = (("1分足","1T"),("3分足","3T"),("15分足","15T"))
 RULE = (("1T","1分足"),("3T","3分足"),("15T","15分足"))
+PAIR = (("USD/JPY", "USD/JPY"),("EUR/JPY","EUR/JPY"),("EUR/USD","EUR/USD"),("GBP/JPY","GBP/JPY"))
 
 class HistoryTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
@@ -41,7 +42,7 @@ class HistoryTable(models.Model):
 class ChartTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
   name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
-  pair = models.CharField(max_length=10)
+  pair = models.CharField(max_length=10, choices=PAIR)
   rule = models.CharField(max_length=10, choices=RULE)
   standard_datetime = models.DateTimeField()
   minus_delta = models.IntegerField(default=100)
