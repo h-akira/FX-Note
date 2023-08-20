@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.db.models import Avg
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 # modelsとforms
 from .models import HistoryTable, ChartTable, HistoryLinkTable
 from .forms import ChartForm
@@ -63,7 +64,12 @@ history_width = [
 
 @login_required
 def history(request):
-  histories = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
+  histories_all = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
+  # paginator = Paginator(histories_all, 50)
+  per_page = request.GET.get('per_page', 50)
+  paginator = Paginator(histories_all, per_page)
+  page = request.GET.get('page')
+  histories = paginator.get_page(page)
   context = {
     "histories":histories, 
     "header":history_header, 
