@@ -12,7 +12,7 @@ from django.db.models import Avg
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 # modelsとforms
-from .models import HistoryTable, ChartTable, HistoryLinkTable
+from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable
 from .forms import ChartForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -266,6 +266,10 @@ def chart_detail(request, id):
 
 @login_required
 def diary(request, year, month, day):
+  try:
+    obj = DiaryTable.objects.get(date=datetime.date(year,month,day))
+  except DiaryTable.DoesNotExist:
+    obj = None
   image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
   image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
   image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
@@ -273,6 +277,7 @@ def diary(request, year, month, day):
     "year":year, 
     "month":month,
     "day":day,
+    "obj":obj,
     "image_USDJPY":image_USDJPY,
     "image_EURJPY":image_EURJPY,
     "image_EURUSD":image_EURUSD
