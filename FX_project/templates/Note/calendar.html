@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load boost %}
+{% block title %}カレンダー{% endblock title %}
+{% block content %}
+{# <h1>カレンダー</h1> #}
+<h1 class="text-center">
+{# <p style="text-align:right"> #}
+{# <a href='{% url "bill:index_prev" year month %}'> << </a> #}
+<a href='{% url "Note:calendar" prev.year prev.month %}'> << </a>
+{{year}}年{{month}}月
+{# <a href='{% url "bill:index_next" year month %}'> >> </a> #}
+<a href='{% url "Note:calendar" next.year next.month %}'> >> </a>
+{# </p> #}
+</h1>
+</div>
+<div class="table-responsive">
+  <table class="table table-bordered border-dark" style="table-layout:fixed;">
+    <tbody>
+    {% for calendar_row in calendar %}
+      <tr>
+        {% for i in calendar_row %}
+        {% if i != "" and i not in calendar.0 %}
+        <th scope="col">
+          <div class="d-grid gap-2">
+            {% if i == calendar_row.0 %}
+            <a href='{% url "Note:diary" year month i %}' class="btn btn-danger btn-sm">{{ i }}</a>
+            {# <div class="btn btn-danger btn-sm">{{ i }}</div> #}
+            {% elif i == calendar_row.6 %}
+            <a href='{% url "Note:diary" year month i %}' class="btn btn-primary btn-sm">{{ i }}</a>
+            {# <div class="btn btn-primary btn-sm">{{ i }}</div> #}
+            {% else %}
+            <a href='{% url "Note:diary" year month i %}' class="btn btn-success btn-sm">{{ i }}</a>
+            {# <div class="btn btn-success btn-sm">{{ i }}</div> #}
+            {% endif %}
+            {% if request.user.is_authenticated %}
+            {% endif %}
+          </div>
+        {% else %}
+        <th scope="col" class="text-center">
+          {{ i }}
+          {% endif %}
+        </th>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock content %}

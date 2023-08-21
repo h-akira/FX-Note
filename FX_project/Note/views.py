@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import datetime
 from pytz import timezone
+import calendar
 # django
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
@@ -11,7 +12,7 @@ from django.db.models import Avg
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 # modelsとforms
-from .models import HistoryTable, ChartTable, HistoryLinkTable
+from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable
 from .forms import ChartForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -189,6 +190,59 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
     # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 
 @login_required
+def chart_image_day(request, pair, year, month, day, _HttpResponse=True):
+  pair = pair.replace("/","")
+  dt = datetime.datetime(year, month, day)
+  file = os.path.join(
+    os.path.dirname(__file__), 
+    "../data/rate", 
+    pair,
+    "{0}{1:02d}".format(year, month),
+    "{0}_{1}{2:02d}{3:02d}.csv".format(pair, year, month, day)
+  )
+  if os.path.isfile(file):
+    df = lib.chart.GMO_dir2DataFrame(
+      os.path.join(os.path.dirname(__file__), "../data/rate"), 
+      pair=pair,
+      date_range=[
+        (dt-datetime.timedelta(days=5)).date(), # 移動平均線等の計算のため，年末年始等にも対応して5日前から
+        (dt+datetime.timedelta(days=1)).date()  # 未満のため+1
+      ]
+    ) 
+    # 15分足
+    df = lib.chart.resample(df, "15T")
+    # テクニカル指標を追加
+    df = lib.chart_settings.add_technical_columns(df)
+    # 当日分
+    df = df.iloc[-96:]
+    ### チャートを作成
+    # 共通部分
+    plot_args = lib.chart_settings.plot_args.copy()
+    # テクニカル指標を追加
+    plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
+    # 画像の大きさ
+    plot_args["figsize"] = (10,6)
+    # 画像の出力先
+    buf = io.BytesIO()
+    plot_args["savefig"] = {'fname':buf,'dpi':100}
+    # タイトル
+    # plot_args["title"] = f"{pair} 15T"
+    # 出力
+    mpf.plot(df, **plot_args)
+    # image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+    # return HttpResponse(image_data, content_type='image/png;base64')
+    buf.seek(0)
+    if _HttpResponse:
+      return HttpResponse(buf, content_type='image/png')
+    else:
+      image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+      return image_data
+      # htmldjangoにおいて以下のように記述することで出力できる:
+      # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
+  else:
+    return None
+
+@login_required
 def chart_detail(request, id):
   # 該当のchartのデータを取得
   _chart = get_object_or_404(ChartTable, pk=id)
@@ -209,6 +263,26 @@ def chart_detail(request, id):
     "checked":False,
   }
   return render(request, 'Note/chart_detail.html', context)
+
+@login_required
+def diary(request, year, month, day):
+  try:
+    obj = DiaryTable.objects.get(date=datetime.date(year,month,day))
+  except DiaryTable.DoesNotExist:
+    obj = None
+  image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
+  image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
+  image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
+  context = {
+    "year":year, 
+    "month":month,
+    "day":day,
+    "obj":obj,
+    "image_USDJPY":image_USDJPY,
+    "image_EURJPY":image_EURJPY,
+    "image_EURUSD":image_EURUSD
+  }
+  return render(request, 'Note/diary.html', context)
 
 @login_required
 def histories2edit(request):
@@ -316,4 +390,35 @@ def chart_delete(request, id):
   _chart.delete()
   return redirect("Note:chart_index")
 
+@login_required
+def calendar_index(request,year=None,month=None):
+  if year == None and month == None:
+    DIFF = 9
+    dt = datetime.datetime.utcnow() + datetime.timedelta(hours=DIFF)
+    return redirect("Note:calendar",dt.year,dt.month)
+  # カレンダーを作成
+  calendar.setfirstweekday(calendar.SUNDAY)
+  _calendar = [row.split() for row in calendar.month(year,month).split("\n")]
+  if _calendar[-1]==[]:
+    _calendar.pop(-1)
+  if len(_calendar[2])!=7:
+    _calendar[2] = [""]*(7-len(_calendar[2]))+_calendar[2]
+  if len(_calendar[-1])!=7:
+    _calendar[-1] = _calendar[-1]+[""]*(7-len(_calendar[-1]))
+  _calendar.pop(0)
+  _calendar[0] = ["日","月","火","水","木","金","土"]
+  context = { 
+      "year":year,
+      "month":month,
+      "calendar":_calendar,
+  }
+  if month!=12:
+    context["next"]={"year":year, "month":month+1}
+  else:
+    context["next"]={"year":year+1, "month":1}
+  if month!=1:
+    context["prev"]={"year":year, "month":month-1}
+  else:
+    context["prev"]={"year":year-1, "month":12}
+  return render(request,'Note/calendar.html',context)
 

@@ -53,9 +53,7 @@ class HistoryLinkTable(models.Model):
   chart = models.ForeignKey(ChartTable, on_delete=models.CASCADE)
   history = models.ForeignKey(HistoryTable, on_delete=models.CASCADE)
 
-
-
-
-
-
+class DiaryTable(models.Model):
+  date = models.DateField(unique=True)
+  text = models.CharField(max_length=2047,null=True, blank=True)
 
