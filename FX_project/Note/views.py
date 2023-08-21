@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import datetime
 from pytz import timezone
+import calendar
 # django
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
@@ -384,4 +385,35 @@ def chart_delete(request, id):
   _chart.delete()
   return redirect("Note:chart_index")
 
+@login_required
+def calendar_index(request,year=None,month=None):
+  if year == None and month == None:
+    DIFF = 9
+    dt = datetime.datetime.utcnow() + datetime.timedelta(hours=DIFF)
+    return redirect("Note:calendar",dt.year,dt.month)
+  # カレンダーを作成
+  calendar.setfirstweekday(calendar.SUNDAY)
+  _calendar = [row.split() for row in calendar.month(year,month).split("\n")]
+  if _calendar[-1]==[]:
+    _calendar.pop(-1)
+  if len(_calendar[2])!=7:
+    _calendar[2] = [""]*(7-len(_calendar[2]))+_calendar[2]
+  if len(_calendar[-1])!=7:
+    _calendar[-1] = _calendar[-1]+[""]*(7-len(_calendar[-1]))
+  _calendar.pop(0)
+  _calendar[0] = ["日","月","火","水","木","金","土"]
+  context = { 
+      "year":year,
+      "month":month,
+      "calendar":_calendar,
+  }
+  if month!=12:
+    context["next"]={"year":year, "month":month+1}
+  else:
+    context["next"]={"year":year+1, "month":1}
+  if month!=1:
+    context["prev"]={"year":year, "month":month-1}
+  else:
+    context["prev"]={"year":year-1, "month":12}
+  return render(request,'Note/calendar.html',context)
 
