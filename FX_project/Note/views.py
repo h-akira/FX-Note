@@ -189,6 +189,59 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
     # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 
 @login_required
+def chart_image_day(request, pair, year, month, day, _HttpResponse=True):
+  pair = pair.replace("/","")
+  dt = datetime.datetime(year, month, day)
+  file = os.path.join(
+    os.path.dirname(__file__), 
+    "../data/rate", 
+    pair,
+    "{0}{1:02d}".format(year, month),
+    "{0}_{1}{2:02d}{3:02d}.csv".format(pair, year, month, day)
+  )
+  if os.path.isfile(file):
+    df = lib.chart.GMO_dir2DataFrame(
+      os.path.join(os.path.dirname(__file__), "../data/rate"), 
+      pair=pair,
+      date_range=[
+        (dt-datetime.timedelta(days=5)).date(), # 移動平均線等の計算のため，年末年始等にも対応して5日前から
+        (dt+datetime.timedelta(days=1)).date()  # 未満のため+1
+      ]
+    ) 
+    # 15分足
+    df = lib.chart.resample(df, "15T")
+    # テクニカル指標を追加
+    df = lib.chart_settings.add_technical_columns(df)
+    # 当日分
+    df = df.iloc[-96:]
+    ### チャートを作成
+    # 共通部分
+    plot_args = lib.chart_settings.plot_args.copy()
+    # テクニカル指標を追加
+    plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
+    # 画像の大きさ
+    plot_args["figsize"] = (10,6)
+    # 画像の出力先
+    buf = io.BytesIO()
+    plot_args["savefig"] = {'fname':buf,'dpi':100}
+    # タイトル
+    # plot_args["title"] = f"{pair} 15T"
+    # 出力
+    mpf.plot(df, **plot_args)
+    # image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+    # return HttpResponse(image_data, content_type='image/png;base64')
+    buf.seek(0)
+    if _HttpResponse:
+      return HttpResponse(buf, content_type='image/png')
+    else:
+      image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+      return image_data
+      # htmldjangoにおいて以下のように記述することで出力できる:
+      # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
+  else:
+    return None
+
+@login_required
 def chart_detail(request, id):
   # 該当のchartのデータを取得
   _chart = get_object_or_404(ChartTable, pk=id)
@@ -209,6 +262,21 @@ def chart_detail(request, id):
     "checked":False,
   }
   return render(request, 'Note/chart_detail.html', context)
+
+@login_required
+def diary(request, year, month, day):
+  image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
+  image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
+  image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
+  context = {
+    "year":year, 
+    "month":month,
+    "day":day,
+    "image_USDJPY":image_USDJPY,
+    "image_EURJPY":image_EURJPY,
+    "image_EURUSD":image_EURUSD
+  }
+  return render(request, 'Note/diary.html', context)
 
 @login_required
 def histories2edit(request):

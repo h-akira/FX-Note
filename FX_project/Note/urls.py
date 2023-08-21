@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import history, chart_detail ,chart_index, histories2edit, chart_add, chart_edit, chart_update, chart_delete, chart_image, none2edit
+from .views import history, chart_detail ,chart_index, histories2edit, chart_add, chart_edit, chart_update, chart_delete, chart_image, none2edit, chart_image_day, diary
 
 app_name = 'Note'
 
@@ -14,5 +14,7 @@ urlpatterns = [
     path('chart/delete/<int:id>',chart_delete, name='chart_delete'),
     path('chart/detail/<int:id>',chart_detail, name='chart_detail'),
     path('chart/image/<int:id>',chart_image, name='chart_image'),
+    path('chart/image/day/<str:pair>/<int:year>/<int:month>/<int:day>',chart_image_day, name='chart_image_day'),
+    path('diary/<int:year>/<int:month>/<int:day>',diary, name='diary'),
     # path('chart/<int:id>/fig',fig, name='fig'),
 ]
