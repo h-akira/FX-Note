@@ -58,6 +58,7 @@
           {% if image_USDJPY == None %}
           データが存在しません．
           {% else %}
+          <h4 class="text-center">15分足</h4>
           <a href="{% url "Note:chart_image_day" "USDJPY" year month day %}">
             <img src="data:image/png;base64,{{ image_USDJPY  }}" alt="Chart">
           </a>
@@ -72,6 +73,7 @@
           {% if image_EURJPY == None %}
           データが存在しません．
           {% else %}
+          <h4 class="text-center">15分足</h4>
           <a href="{% url "Note:chart_image_day" "EURJPY" year month day %}">
             <img src="data:image/png;base64,{{ image_EURJPY  }}" alt="Chart">
           </a>
@@ -86,6 +88,7 @@
           {% if image_EURUSD == None %}
           データが存在しません．
           {% else %}
+          <h4 class="text-center">15分足</h4>
           <a href="{% url "Note:chart_image_day" "EURUSD" year month day %}">
             <img src="data:image/png;base64,{{ image_EURUSD  }}" alt="Chart">
           </a>
@@ -94,7 +97,7 @@
       </div>
     </div>
     <div class="col">
-      <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日</h1>
+      <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})</h1>
       <div class="card" style="width: 100%;">
         <div class="card-body">
           {% if obj == None %}
