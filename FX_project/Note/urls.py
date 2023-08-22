@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import history, chart_detail ,chart_index, histories2edit, chart_add, chart_edit, chart_update, chart_delete, chart_image, none2edit, chart_image_day, diary, calendar_index
+from .views import history, chart_detail ,chart_index, histories2edit, chart_add, chart_edit, chart_update, chart_delete, chart_image, none2edit, chart_image_day, diary, calendar_index, diary_create, diary_update, diary_delete
 
 app_name = 'Note'
 
@@ -16,6 +16,10 @@ urlpatterns = [
     path('chart/image/<int:id>',chart_image, name='chart_image'),
     path('chart/image/day/<str:pair>/<int:year>/<int:month>/<int:day>',chart_image_day, name='chart_image_day'),
     path('diary/<int:year>/<int:month>/<int:day>',diary, name='diary'),
+    path('diary/create/<int:year>/<int:month>/<int:day>',diary_create, name='diary_create'),
+    path('diary/create/',diary_create, name='diary_create_none'),
+    path('diary/update/<int:id>',diary_update, name='diary_update'),
+    path('diary/delete/<int:id>',diary_delete, name='diary_delete'),
     path('calendar/<int:year>/<int:month>',calendar_index, name='calendar'),
     path('calendar/',calendar_index, name='calendar_now'),
     # path('chart/<int:id>/fig',fig, name='fig'),

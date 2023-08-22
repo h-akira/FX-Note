@@ -19,7 +19,7 @@
   <button type="submit" class="btn btn-primary btn-sm">登録</button>
   {% elif type == "update" %}
   <button type="submit" class="btn btn-primary btn-sm">更新</button>
-  <a href="{% url 'Note:chart_delete' id %}" class="btn btn-primary btn-sm">削除</button>
+  <a href="{% url 'Note:chart_delete' id %}" class="btn btn-primary btn-sm">削除</a>
   {% else %}
   <button type="submit" class="btn btn-primary btn-sm">登録</button>
   {% endif %}

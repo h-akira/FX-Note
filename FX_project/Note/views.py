@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 # modelsとforms
 from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable
-from .forms import ChartForm
+from .forms import ChartForm, DiaryForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import lib.chart
@@ -178,8 +178,6 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
   plot_args["savefig"] = {'fname':buf,'dpi':100}
   # 出力
   mpf.plot(df, **plot_args)
-  # image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-  # return HttpResponse(image_data, content_type='image/png;base64')
   buf.seek(0)
   if _HttpResponse:
     return HttpResponse(buf, content_type='image/png')
@@ -229,8 +227,6 @@ def chart_image_day(request, pair, year, month, day, _HttpResponse=True):
     # plot_args["title"] = f"{pair} 15T"
     # 出力
     mpf.plot(df, **plot_args)
-    # image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-    # return HttpResponse(image_data, content_type='image/png;base64')
     buf.seek(0)
     if _HttpResponse:
       return HttpResponse(buf, content_type='image/png')
@@ -321,21 +317,13 @@ def histories2edit(request):
 @login_required
 def none2edit(request):
   initial = {
-    # "user":request.user,
-    # "pair":pairs[0],
-    # "standard_datetime": ave,
     "plus_delta":100,
     "minus_delta":100
   }
   form = ChartForm(initial=initial)
   context = {
-    # "histories":histories,
-    # "header":history_header,
-    # "width":history_width,
     "form":form,
     "table":False,
-    # "box":True, 
-    # "checked":True,
     "type":"add"
   }
   return render(request, 'Note/edit.html', context)
@@ -421,4 +409,63 @@ def calendar_index(request,year=None,month=None):
   else:
     context["prev"]={"year":year-1, "month":12}
   return render(request,'Note/calendar.html',context)
+
+@login_required
+def diary_create(request, year=None, month=None, day=None):
+  if request.method == 'GET':
+    if year != None and month != None and day != None:
+      initial = {
+        "date":datetime.date(year, month, day)
+      }
+      form = DiaryForm(initial=initial)
+    else:
+      form = DiaryForm()
+    context = {
+      "form":form,
+      "type":"add"
+    }
+    return render(request, 'Note/diary_edit.html', context)
+  elif request.method == 'POST':
+    diaryForm = DiaryForm(request.POST)
+    if diaryForm.is_valid():
+      diaryForm.save()
+    date = diaryForm.cleaned_data.get('date')
+    year = date.year
+    month = date.month 
+    day = date.day
+    print(year, month, day)
+    return redirect("Note:diary",year,month,day)
+
+@login_required
+def diary_update(request, id):
+  _diary = get_object_or_404(DiaryTable, pk=id)
+  if request.method == 'GET':
+    form = DiaryForm(instance=_diary)
+    context = { 
+      # "year":_diary.date.year, 
+      # "month":_diary.date.month,
+      # "day":_diary.date.day,
+      'form': form,
+      'id': id,
+      "type":"update"
+    }
+    return render(request, 'Note/diary_edit.html', context)
+  elif request.method == 'POST':
+    diaryForm = DiaryForm(request.POST, instance=_diary)
+    if diaryForm.is_valid():
+      diaryForm.save()
+    date = diaryForm.cleaned_data.get('date')
+    year = date.year
+    month = date.month 
+    day = date.day
+    return redirect("Note:diary", year, month, day)
+
+@login_required
+def diary_delete(request, id):
+  _diary = get_object_or_404(DiaryTable, pk=id)
+  year=_diary.date.year 
+  month =_diary.date.month
+  day =_diary.date.day
+  _diary.delete()
+  return redirect("Note:diary", year, month, day)
 
