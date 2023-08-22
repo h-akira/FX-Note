@@ -25,6 +25,9 @@ from matplotlib import use
 use("Agg")
 import mplfinance as mpf
 
+# 曜日変換要
+WEEK = ("月","火","水","木","金","土","日")
+
 # html用
 history_header = [
   "アカウント",
@@ -273,6 +276,7 @@ def diary(request, year, month, day):
     "year":year, 
     "month":month,
     "day":day,
+    "weekday":WEEK[datetime.date(year,month,day).weekday()],
     "obj":obj,
     "image_USDJPY":image_USDJPY,
     "image_EURJPY":image_EURJPY,
