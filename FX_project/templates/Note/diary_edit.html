@@ -1,13 +1,9 @@
-{% extends 'base.html' %}
-{% block title %}日記の編集{% endblock title %}
-{% block content %}
-<h1>編集</h1>
 {% if type == "add" %}
-<form class="" action="{% url 'Note:diary_create_none' %}" method="post">
+<form class="" action="{% url 'Note:diary_create' year month day %}" method="post">
 {% elif type == "update" %}
 <form class="" action="{% url 'Note:diary_update' id %}" method="post">
 {% else %}
-<form class="" action="{% url 'Note:diary_create_none' %}" method="post">
+<form class="" action="{% url 'Note:diary_create' year month day %}" method="post">
 {% endif %}
   {% csrf_token %}
   {{ form.as_p }}
@@ -20,4 +16,3 @@
   <button type="submit" class="btn btn-primary btn-sm">登録</button>
   {% endif %}
 </form>
-{% endblock content %}

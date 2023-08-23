@@ -20,7 +20,11 @@
       <tr>
         {% for i in calendar_row %}
         {% if i != "" and i not in calendar.0 %}
+        {% if i == today %}
+        <th scope="col" class="table-primary">
+        {% else %}
         <th scope="col">
+        {% endif %}
           <div class="d-grid gap-2">
             {% if i == calendar_row.0 %}
             <a href='{% url "Note:diary" year month i %}' class="btn btn-danger btn-sm">{{ i }}</a>

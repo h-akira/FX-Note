@@ -11,10 +11,16 @@ class ChartForm(forms.ModelForm):
       'standard_datetime': forms.DateTimeInput(attrs={"type": "datetime-local"})
     }
 class DiaryForm(forms.ModelForm):
+  # class Meta:
+    # model = DiaryTable
+    # fields = ("date", "text")
+    # widgets = {
+      # 'date': forms.DateInput(attrs={'type': 'date'}),
+      # 'text': forms.Textarea(attrs={'rows': 10, 'cols': 50})
+    # }
   class Meta:
     model = DiaryTable
-    fields = ("date", "text")
+    fields = ("text",)
     widgets = {
-      'date': forms.DateInput(attrs={'type': 'date'}),
       'text': forms.Textarea(attrs={'rows': 10, 'cols': 50})
     }

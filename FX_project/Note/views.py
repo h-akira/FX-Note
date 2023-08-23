@@ -263,26 +263,6 @@ def chart_detail(request, id):
   }
   return render(request, 'Note/chart_detail.html', context)
 
-@login_required
-def diary(request, year, month, day):
-  try:
-    obj = DiaryTable.objects.get(date=datetime.date(year,month,day))
-  except DiaryTable.DoesNotExist:
-    obj = None
-  image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
-  image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
-  image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
-  context = {
-    "year":year, 
-    "month":month,
-    "day":day,
-    "weekday":WEEK[datetime.date(year,month,day).weekday()],
-    "obj":obj,
-    "image_USDJPY":image_USDJPY,
-    "image_EURJPY":image_EURJPY,
-    "image_EURUSD":image_EURUSD
-  }
-  return render(request, 'Note/diary.html', context)
 
 @login_required
 def histories2edit(request):
@@ -399,10 +379,17 @@ def calendar_index(request,year=None,month=None):
     _calendar[-1] = _calendar[-1]+[""]*(7-len(_calendar[-1]))
   _calendar.pop(0)
   _calendar[0] = ["日","月","火","水","木","金","土"]
+  # todayに色をつけたいので
+  dt_now = datetime.datetime.now()
+  if dt_now.year == year and dt_now.month == month:
+    today = str(dt_now.day)
+  else:
+    today = None
   context = { 
       "year":year,
       "month":month,
       "calendar":_calendar,
+      "today":today
   }
   if month!=12:
     context["next"]={"year":year, "month":month+1}
@@ -415,53 +402,60 @@ def calendar_index(request,year=None,month=None):
   return render(request,'Note/calendar.html',context)
 
 @login_required
-def diary_create(request, year=None, month=None, day=None):
-  if request.method == 'GET':
-    if year != None and month != None and day != None:
-      initial = {
-        "date":datetime.date(year, month, day)
-      }
-      form = DiaryForm(initial=initial)
-    else:
+def diary(request, year, month, day, option=None):
+  try:
+    obj = DiaryTable.objects.get(date=datetime.date(year,month,day))
+  except DiaryTable.DoesNotExist:
+    obj = None
+  image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
+  image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
+  image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
+  context = {
+    "year":year, 
+    "month":month,
+    "day":day,
+    "weekday":WEEK[datetime.date(year,month,day).weekday()],
+    "obj":obj,
+    "image_USDJPY":image_USDJPY,
+    "image_EURJPY":image_EURJPY,
+    "image_EURUSD":image_EURUSD,
+    "form":None,
+    "type":None,
+    "option":option
+  }
+  if option == "edit":
+    if obj == None:
       form = DiaryForm()
-    context = {
-      "form":form,
-      "type":"add"
-    }
-    return render(request, 'Note/diary_edit.html', context)
-  elif request.method == 'POST':
-    diaryForm = DiaryForm(request.POST)
-    if diaryForm.is_valid():
-      diaryForm.save()
-    date = diaryForm.cleaned_data.get('date')
-    year = date.year
-    month = date.month 
-    day = date.day
-    print(year, month, day)
+      context["type"] = "add"
+    else:
+      form = DiaryForm(instance=obj)
+      context["type"] = "update"
+    context["form"] = form
+  return render(request, 'Note/diary.html', context)
+
+@login_required
+def diary_create(request, year, month, day):
+  if request.method == 'POST':
+    form = DiaryForm(request.POST)
+    if form.is_valid():
+    # diaryForm = DiaryForm(request.POST)
+      instance = form.save(commit=False)  # まだDBには保存しない
+      instance.date = datetime.date(year,month,day)  # 日付をセット
+      instance.save()  # DBに保存
+    # if diaryForm.is_valid():
+      # diaryForm.save()
     return redirect("Note:diary",year,month,day)
 
 @login_required
 def diary_update(request, id):
   _diary = get_object_or_404(DiaryTable, pk=id)
-  if request.method == 'GET':
-    form = DiaryForm(instance=_diary)
-    context = { 
-      # "year":_diary.date.year, 
-      # "month":_diary.date.month,
-      # "day":_diary.date.day,
-      'form': form,
-      'id': id,
-      "type":"update"
-    }
-    return render(request, 'Note/diary_edit.html', context)
-  elif request.method == 'POST':
+  if request.method == 'POST':
     diaryForm = DiaryForm(request.POST, instance=_diary)
     if diaryForm.is_valid():
       diaryForm.save()
-    date = diaryForm.cleaned_data.get('date')
-    year = date.year
-    month = date.month 
-    day = date.day
+    year = _diary.date.year
+    month = _diary.date.month 
+    day = _diary.date.day
     return redirect("Note:diary", year, month, day)
 
 @login_required
