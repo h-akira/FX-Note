@@ -117,12 +117,18 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
     histories = sorted(histories, reverse=True, key=lambda x: x.id)
     histories = sorted(histories, reverse=True, key=lambda x: x.order_datetime)
   # 為替データを取得
+  if "H" in _chart.rule:
+    days = 40
+  elif "D" in _chart.rule:
+    days = 240
+  else:
+    days = 10
   df = lib.chart.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair=_chart.pair,
     date_range=[
-      (_chart.standard_datetime-datetime.timedelta(days=1)).date(),
-      (_chart.standard_datetime+datetime.timedelta(days=1)).date()
+      (_chart.standard_datetime-datetime.timedelta(days=days)).date(),
+      (_chart.standard_datetime+datetime.timedelta(days=days)).date()
     ]
   ) 
   # 足を変換

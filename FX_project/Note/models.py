@@ -8,7 +8,16 @@ STATE = (("accepted","受付済"),("executed","約定済"),("canceled","取消�
 # CONDITION = (("指値","limit"),("逆指値","stop"),("成行","market"))
 CONDITION = (("limit","指値"),("stop","逆指値"),("market","成行"))
 # RULE = (("1分足","1T"),("3分足","3T"),("15分足","15T"))
-RULE = (("1T","1分足"),("3T","3分足"),("15T","15分足"))
+RULE = (
+  ("1T","1分足"),
+  ("3T","3分足"),
+  ("5T","5分足"),
+  ("15T","15分足"),
+  ("30T","30分足"),
+  ("1H","1時間足"),
+  ("4H","4時間足"),
+  ("D","日足"),
+)
 PAIR = (("USD/JPY", "USD/JPY"),("EUR/JPY","EUR/JPY"),("EUR/USD","EUR/USD"),("GBP/JPY","GBP/JPY"))
 
 class HistoryTable(models.Model):
@@ -56,4 +65,14 @@ class HistoryLinkTable(models.Model):
 class DiaryTable(models.Model):
   date = models.DateField(unique=True)
   text = models.CharField(max_length=2047,null=True, blank=True)
+
+
+# class ReviewTable(models.Model):
+  # name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+
+
+
+
+
+
 
