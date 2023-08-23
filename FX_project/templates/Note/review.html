@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}レビュー{% endblock title %}
+{% block content %}
+<div class="container-fluid custom-container">
+  <div class="row">
+    <div class="col-9">
+      {% include 'Note/chart_tab.html' %}
+    </div>
+    <div class="col">
+      <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})</h1>
+      <h1 class="text-center">{{ time_text }}</h1>
+      {# {% if option == "edit" %} #}
+      {# {% if type == "add" %} #}
+      {# <form class="" action="{% url 'Note:diary_create' year month day %}" method="post"> #}
+      {# {% elif type == "update" %} #}
+      {# <form class="" action="{% url 'Note:diary_update' obj.id %}" method="post"> #}
+      {# {% else %} #}
+      {# <form class="" action="{% url 'Note:diary_create' year month day %}" method="post"> #}
+      {# {% endif %} #}
+      {#   {% csrf_token %} #}
+      {#   {{ form.as_p }} #}
+      {#   {% if type == "add" %} #}
+      {#   <button type="submit" class="btn btn-primary btn-sm">登録</button> #}
+      {#   {% elif type == "update" %} #}
+      {#   <button type="submit" class="btn btn-primary btn-sm">更新</button> #}
+      {#   <a href="{% url 'Note:diary_delete' obj.id %}" class="btn btn-primary btn-sm">削除</a> #}
+      {#   {% else %} #}
+      {#   <button type="submit" class="btn btn-primary btn-sm">登録</button> #}
+      {#   {% endif %} #}
+      {# </form> #}
+      {# {% else %} #}
+      {# <div class="card" style="width: 100%;"> #}
+      {#   <div class="card-body"> #}
+      {#     {% if obj == None %} #}
+      {#     日記が存在しません． #}
+      {#     {% else %} #}
+      {#     {{ obj.text }} #}
+      {#     {% endif %} #}
+      {#   </div> #}
+      {# </div> #}
+      {# <div class="d-flex justify-content-end"> #}
+      {#   {% if obj == None %} #}
+      {#   <a href="{% url 'Note:diary_option' year month day "edit" %}" class="btn btn-primary btn-sm">作成</a> #}
+      {#   {% else %} #}
+      {#   <a href="{% url 'Note:diary_option' year month day "edit" %}" class="btn btn-primary btn-sm">編集</a> #}
+      {#   {% endif %} #}
+      {# </div> #}
+      {# {% endif %} #}
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -492,7 +492,44 @@ def diary_delete(request, id):
   return redirect("Note:diary", year, month, day)
 
 @login_required
-def chart_image_review(request, id, _HttpResponse=True):
+def review(request, id):
+  _review = get_object_or_404(ReviewTable, pk=id)
+  image_USDJPY = chart_image_review(request, "USD/JPY", id, _HttpResponse=False)
+  image_EURJPY = chart_image_review(request, "EUR/JPY", id, _HttpResponse=False)
+  image_EURUSD = chart_image_review(request, "EUR/USD", id, _HttpResponse=False)
+  chart_tabs = [
+    "USD/JPY",
+    "EUR/JPY",
+    "EUR/USD"
+  ]
+  chart_urls = [
+    reverse('Note:chart_image_review', args=['USDJPY', id]),
+    reverse('Note:chart_image_review', args=['EURJPY', id]),
+    reverse('Note:chart_image_review', args=['EURUSD', id])
+  ]
+  chart_images = [
+    image_USDJPY,
+    image_EURJPY,
+    image_EURUSD
+  ]
+  chart_heads = [
+    "USD/JPY 15分足",
+    "EUR/JPY 15分足",
+    "EUR/USD 15分足"
+  ]
+  context = {
+    "year":_review.dt.year, 
+    "month":_review.dt.month,
+    "day":_review.dt.day,
+    "weekday":WEEK[_review.dt.weekday()],
+    "time_text": _review.dt.strftime('%H時%M分'),
+    "chart_tabs" : chart_tabs,
+    "chart_bodys" : list(zip(chart_heads, chart_urls, chart_images))
+  }
+  return render(request, 'Note/review.html', context)
+
+@login_required
+def chart_image_review(request, pair, id, _HttpResponse=True):
   _review = get_object_or_404(ReviewTable, pk=id)
   # 為替データを取得
   if "H" in _review.rule:
@@ -503,7 +540,7 @@ def chart_image_review(request, id, _HttpResponse=True):
     days = 10
   df = lib.chart.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
-    pair=_review.pair,
+    pair=pair,
     date_range=[
       (_review.dt-datetime.timedelta(days=days)).date(),
       (_review.dt+datetime.timedelta(days=1)).date(),
@@ -522,7 +559,7 @@ def chart_image_review(request, id, _HttpResponse=True):
   # テクニカル指標を追加
   plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
   # 画像の大きさ
-  plot_args["figsize"] = (10,6)
+  plot_args["figsize"] = (13,7)
   # 画像の出力先
   buf = io.BytesIO()
   plot_args["savefig"] = {'fname':buf,'dpi':100}
