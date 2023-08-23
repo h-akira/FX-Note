@@ -450,9 +450,6 @@ def diary(request, year, month, day, option=None):
     "chart_tabs" : chart_tabs,
     "chart_bodys" : list(zip(chart_heads, chart_urls, chart_images))
   }
-  print(list(zip(chart_heads, chart_urls)))
-  # for i,j,k in zip(chart_heads, chart_urls, chart_images):
-    # print(i,j)
   if option == "edit":
     if obj == None:
       form = DiaryForm()
