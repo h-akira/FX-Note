@@ -2,15 +2,10 @@
 {% load boost %}
 {% block title %}カレンダー{% endblock title %}
 {% block content %}
-{# <h1>カレンダー</h1> #}
 <h1 class="text-center">
-{# <p style="text-align:right"> #}
-{# <a href='{% url "bill:index_prev" year month %}'> << </a> #}
 <a href='{% url "Note:calendar" prev.year prev.month %}'> << </a>
 {{year}}年{{month}}月
-{# <a href='{% url "bill:index_next" year month %}'> >> </a> #}
 <a href='{% url "Note:calendar" next.year next.month %}'> >> </a>
-{# </p> #}
 </h1>
 </div>
 <div class="table-responsive">

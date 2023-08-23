@@ -263,10 +263,11 @@ def chart_detail(request, id):
   }
   return render(request, 'Note/chart_detail.html', context)
 
-
 @login_required
 def histories2edit(request):
-  histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register")).order_by("-order_number","-order_datetime")
+  histories = HistoryTable.objects.filter(
+    id__in=request.POST.getlist("register")).order_by("-order_number","-order_datetime"
+  )
   dts = [i[0].timestamp() for i in histories.values_list("execution_datetime") if i[0] != None]
   if len(dts) == 0:
     dts = [i[0].timestamp() for i in histories.values_list("order_datetime") if i[0] != None]
@@ -438,12 +439,9 @@ def diary_create(request, year, month, day):
   if request.method == 'POST':
     form = DiaryForm(request.POST)
     if form.is_valid():
-    # diaryForm = DiaryForm(request.POST)
       instance = form.save(commit=False)  # まだDBには保存しない
       instance.date = datetime.date(year,month,day)  # 日付をセット
       instance.save()  # DBに保存
-    # if diaryForm.is_valid():
-      # diaryForm.save()
     return redirect("Note:diary",year,month,day)
 
 @login_required

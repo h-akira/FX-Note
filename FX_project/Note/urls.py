@@ -22,5 +22,4 @@ urlpatterns = [
     path('diary/delete/<int:id>',diary_delete, name='diary_delete'),
     path('calendar/<int:year>/<int:month>',calendar_index, name='calendar'),
     path('calendar/',calendar_index, name='calendar_now'),
-    # path('chart/<int:id>/fig',fig, name='fig'),
 ]
