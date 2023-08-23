@@ -75,7 +75,7 @@ class DiaryTable(models.Model):
 class ReviewTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
   name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
-  pair = models.CharField(max_length=10, choices=PAIR)
+  # pair = models.CharField(max_length=10, choices=PAIR)
   rule = models.CharField(max_length=10, choices=RULE)
   delta = models.IntegerField(default=150)
   dt = models.DateTimeField()
