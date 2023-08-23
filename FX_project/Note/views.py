@@ -11,9 +11,10 @@ from django.http import HttpResponse
 from django.db.models import Avg
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.urls import reverse
 # modelsとforms
-from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable
-from .forms import ChartForm, DiaryForm
+from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable, ReviewTable
+from .forms import ChartForm, DiaryForm, ReviewForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import lib.chart
@@ -417,18 +418,37 @@ def diary(request, year, month, day, option=None):
   image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
   image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
   image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
+  chart_tabs = [
+    "USD/JPY",
+    "EUR/JPY",
+    "EUR/USD"
+  ]
+  chart_urls = [
+    reverse('Note:chart_image_day', args=['USDJPY', year, month, day]),
+    reverse('Note:chart_image_day', args=['EURJPY', year, month, day]),
+    reverse('Note:chart_image_day', args=['EURUSD', year, month, day])
+  ]
+  chart_images = [
+    image_USDJPY,
+    image_EURJPY,
+    image_EURUSD
+  ]
+  chart_heads = [
+    "USD/JPY 15分足",
+    "EUR/JPY 15分足",
+    "EUR/USD 15分足"
+  ]
   context = {
     "year":year, 
     "month":month,
     "day":day,
     "weekday":WEEK[datetime.date(year,month,day).weekday()],
     "obj":obj,
-    "image_USDJPY":image_USDJPY,
-    "image_EURJPY":image_EURJPY,
-    "image_EURUSD":image_EURUSD,
     "form":None,
     "type":None,
-    "option":option
+    "option":option,
+    "chart_tabs" : chart_tabs,
+    "chart_bodys" : zip(chart_heads, chart_urls, chart_images)
   }
   if option == "edit":
     if obj == None:
@@ -470,4 +490,56 @@ def diary_delete(request, id):
   day =_diary.date.day
   _diary.delete()
   return redirect("Note:diary", year, month, day)
+
+@login_required
+def chart_image_review(request, id, _HttpResponse=True):
+  _review = get_object_or_404(ReviewTable, pk=id)
+  # 為替データを取得
+  if "H" in _review.rule:
+    days = 50
+  elif "D" in _review.rule:
+    days = 250
+  else:
+    days = 10
+  df = lib.chart.GMO_dir2DataFrame(
+    os.path.join(os.path.dirname(__file__), "../data/rate"), 
+    pair=_review.pair,
+    date_range=[
+      (_review.dt-datetime.timedelta(days=days)).date(),
+      (_review.dt+datetime.timedelta(days=1)).date(),
+    ]
+  )
+  df = df[df.index <= _review.dt.astimezone(timezone('Asia/Tokyo'))]
+  # 足
+  df = lib.chart.resample(df, _review.rule)
+  # テクニカル指標を追加
+  df = lib.chart_settings.add_technical_columns(df)
+  # 当日分
+  df = df.iloc[-_review.delta:]
+  ### チャートを作成
+  # 共通部分
+  plot_args = lib.chart_settings.plot_args.copy()
+  # テクニカル指標を追加
+  plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
+  # 画像の大きさ
+  plot_args["figsize"] = (10,6)
+  # 画像の出力先
+  buf = io.BytesIO()
+  plot_args["savefig"] = {'fname':buf,'dpi':100}
+  # タイトル
+  # plot_args["title"] = f"{pair} 15T"
+  # 出力
+  mpf.plot(df, **plot_args)
+  buf.seek(0)
+  if _HttpResponse:
+    return HttpResponse(buf, content_type='image/png')
+  else:
+    image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return image_data
+    # htmldjangoにおいて以下のように記述することで出力できる:
+    # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
+
+
+
+
 

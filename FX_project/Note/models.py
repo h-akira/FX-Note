@@ -18,13 +18,18 @@ RULE = (
   ("4H","4時間足"),
   ("D","日足"),
 )
-PAIR = (("USD/JPY", "USD/JPY"),("EUR/JPY","EUR/JPY"),("EUR/USD","EUR/USD"),("GBP/JPY","GBP/JPY"))
+PAIR = (
+  ("USD/JPY", "USD/JPY"),
+  ("EUR/JPY","EUR/JPY"),
+  ("EUR/USD","EUR/USD"),
+  ("GBP/JPY","GBP/JPY")
+)
 
 class HistoryTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
   account = models.CharField(max_length=50)
   order_number = models.IntegerField()
-  pair = models.CharField(max_length=10)
+  pair = models.CharField(max_length=10)  # choicesは利用しない
   order_type  = models.CharField(max_length=20)
   kind = models.CharField(max_length=10, choices=KIND)
   buy_sell = models.CharField(max_length=10, choices=BUY_SELL)
@@ -67,8 +72,13 @@ class DiaryTable(models.Model):
   text = models.CharField(max_length=2047,null=True, blank=True)
 
 
-# class ReviewTable(models.Model):
-  # name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+class ReviewTable(models.Model):
+  user = models.ForeignKey(User,on_delete=models.CASCADE)
+  name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+  pair = models.CharField(max_length=10, choices=PAIR)
+  rule = models.CharField(max_length=10, choices=RULE)
+  delta = models.IntegerField(default=150)
+  dt = models.DateTimeField()
 
 
 
