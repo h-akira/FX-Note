@@ -20,7 +20,7 @@ class DiaryForm(forms.ModelForm):
 class ReviewForm(forms.ModelForm):
   class Meta:
     model = ReviewTable
-    fields = ("name", "pair", "rule", "dt", "delta")
+    fields = ("name", "rule", "dt", "delta")
     widgets = {
       'standard_datetime': forms.DateTimeInput(attrs={"type": "datetime-local"})
     }
