@@ -412,7 +412,7 @@ def calendar_index(request,year=None,month=None):
 @login_required
 def diary(request, year, month, day, option=None):
   try:
-    obj = DiaryTable.objects.get(date=datetime.date(year,month,day))
+    obj = DiaryTable.objects.get(user=request.user, date=datetime.date(year,month,day))
   except DiaryTable.DoesNotExist:
     obj = None
   image_USDJPY = chart_image_day(request, "USD/JPY", year, month, day, _HttpResponse=False)
@@ -467,6 +467,7 @@ def diary_create(request, year, month, day):
     if form.is_valid():
       instance = form.save(commit=False)  # まだDBには保存しない
       instance.date = datetime.date(year,month,day)  # 日付をセット
+      instance.user = request.user  # userをセット
       instance.save()  # DBに保存
     return redirect("Note:diary",year,month,day)
 
@@ -494,51 +495,46 @@ def diary_delete(request, id):
 @login_required
 def review(request, id):
   _review = get_object_or_404(ReviewTable, pk=id)
-  image_USDJPY, close_USDJPY, ir_USDJPY = chart_image_review(request, "USD/JPY", id, _HttpResponse=False)
-  image_EURJPY, close_EURJPY, ir_EURJPY = chart_image_review(request, "EUR/JPY", id, _HttpResponse=False)
-  image_EURUSD, close_EURUSD, ir_EURUSD = chart_image_review(request, "EUR/USD", id, _HttpResponse=False)
-  chart_tabs = [
-    "USD/JPY",
-    "EUR/JPY",
-    "EUR/USD"
-  ]
-  chart_urls = [
-    reverse('Note:chart_image_review', args=['USDJPY', id]),
-    reverse('Note:chart_image_review', args=['EURJPY', id]),
-    reverse('Note:chart_image_review', args=['EURUSD', id])
-  ]
-  chart_images = [
-    image_USDJPY,
-    image_EURJPY,
-    image_EURUSD
-  ]
-  arrows = []
-  for i in [ir_USDJPY, ir_EURJPY, ir_EURUSD]:
-    if i > 0:
-      arrows.append("↑")
-    elif i < 0:
-      arrows.append("↓")
-    else:
-      arrows.append("→")
-  chart_heads = [
-    f"USD/JPY 15分足\n{close_USDJPY} {arrows[0]}",
-    f"EUR/JPY 15分足\n{close_EURJPY} {arrows[1]}",
-    f"EUR/USD 15分足\n{close_EURUSD} {arrows[2]}"
-  ]
+  image, close, increase_rate = chart_image_review(
+    request,
+    id,
+    _HttpResponse=False,
+    _review=_review
+  )
+  form = ReviewForm(instance=_review)
+  print("------------")
+  print(_review.dt)
+  dt = _review.dt.astimezone(timezone("Asia/Tokyo"))
+  print(dt)
+  print("------------")
   context = {
-    "year":_review.dt.year, 
-    "month":_review.dt.month,
-    "day":_review.dt.day,
-    "weekday":WEEK[_review.dt.weekday()],
-    "time_text": _review.dt.strftime('%H時%M分'),
-    "chart_tabs" : chart_tabs,
-    "chart_bodys" : list(zip(chart_heads, chart_urls, chart_images))
+    "review":_review,
+    "year":dt.year, 
+    "month":dt.month,
+    "day":dt.day,
+    "weekday":WEEK[dt.weekday()],
+    "time_text": dt.strftime('%H時%M分'),
+    "id":id,
+    "image" : image,
+    "close":close,
+    "increase_rate" : increase_rate,
+    "form":form
   }
   return render(request, 'Note/review.html', context)
 
 @login_required
-def chart_image_review(request, pair, id, _HttpResponse=True):
-  _review = get_object_or_404(ReviewTable, pk=id)
+def review_later(request, id, delta):
+  delta = int(delta)
+  obj = ReviewTable.objects.get(pk=id) 
+  obj.dt = obj.dt + datetime.timedelta(minutes=delta)
+  obj.save()
+  return redirect("Note:review",id)
+
+
+@login_required
+def chart_image_review(request, id, _HttpResponse=True, _review=None):
+  if _review == None:
+    _review = get_object_or_404(ReviewTable, pk=id)
   # 為替データを取得
   if "H" in _review.rule:
     days = 50
@@ -548,12 +544,14 @@ def chart_image_review(request, pair, id, _HttpResponse=True):
     days = 10
   df = lib.chart.GMO_dir2DataFrame(
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
-    pair=pair,
+    pair=_review.pair,
     date_range=[
       (_review.dt-datetime.timedelta(days=days)).date(),
-      (_review.dt+datetime.timedelta(days=1)).date(),
+      (_review.dt+datetime.timedelta(days=2)).date(),
     ]
   )
+  print(_review.dt.astimezone(timezone("Asia/Tokyo")))
+  print(df.index[-1])
   df = df[df.index <= _review.dt.astimezone(timezone('Asia/Tokyo'))]
   # 終値
   close = df["Close"].iloc[-1]
@@ -591,7 +589,45 @@ def chart_image_review(request, pair, id, _HttpResponse=True):
     # htmldjangoにおいて以下のように記述することで出力できる:
     # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 
+@login_required
+def review_index(request):
+  _review = ReviewTable.objects.filter(user=request.user).order_by("-id")
+  context = {
+    "reviews": _review
+  }
+  return render(request, 'Note/review_index.html', context)
 
+@login_required
+def review_update(request,id):
+  _review = get_object_or_404(ReviewTable, pk=id)
+  form = ReviewForm(request.POST, instance=_review)
+  if form.is_valid():
+    form.save()
+    return redirect("Note:review",id)
 
+@login_required
+def review_create(request):
+  if request.method == 'POST':
+    form = ReviewForm(request.POST)
+    if form.is_valid():
+      instance = form.save(commit=False)  # まだDBには保存しない
+      instance.user = request.user  # ログインしているユーザー情報をセット
+      instance.save()  # DBに保存
+      return redirect("Note:review", instance.id)
+    else:
+      print("not valid")
+      return redirect("Note:review_index")
+  else:
+    form = ReviewForm()
+    context = {
+    "form":form,
+    }
+    return render(request, 'Note/review_create.html', context)
+
+@login_required
+def review_delete(request, id):
+  _review = get_object_or_404(ReviewTable, pk=id)
+  _review.delete()
+  return redirect("Note:review_index")
 
 

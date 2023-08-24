@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import history, chart_detail ,chart_index, histories2edit, chart_add, chart_edit, chart_update, chart_delete, chart_image, none2edit, chart_image_day, diary, calendar_index, diary_create, diary_update, diary_delete, chart_image_review, review
+from .views import history, chart_detail ,chart_index, histories2edit, chart_add, chart_edit, chart_update, chart_delete, chart_image, none2edit, chart_image_day, diary, calendar_index, diary_create, diary_update, diary_delete, chart_image_review, review, review_later, review_index, review_update, review_create, review_delete
 
 app_name = 'Note'
 
@@ -22,6 +22,12 @@ urlpatterns = [
     path('diary/delete/<int:id>',diary_delete, name='diary_delete'),
     path('calendar/<int:year>/<int:month>',calendar_index, name='calendar'),
     path('calendar/',calendar_index, name='calendar_now'),
-    path('review/image/<str:pair>/<int:id>',chart_image_review, name='chart_image_review'),
+    path('review/image/<int:id>',chart_image_review, name='chart_image_review'),
+    path('review/',review_index, name='review_index'),
     path('review/<int:id>',review, name='review'),
+    path('review/<int:id>/later/<str:delta>',review_later, name='review_later'),
+    path('review/update/<int:id>',review_update, name='review_update'),
+    path('review/create/',review_create, name='review_create'),
+    path('review/delete/<int:id>',review_delete, name='review_delete'),
+    # path('review/<int:id>/later/<int:delta>/<str:minus>',review_later, name='review_later'),
 ]

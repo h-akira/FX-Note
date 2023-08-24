@@ -3,49 +3,49 @@
 {% block content %}
 <div class="container-fluid custom-container">
   <div class="row">
-    <div class="col-9">
-      {% include 'Note/chart_tab.html' %}
+    <div class="col-8">
+      <h3 class="text-center">{{ review.pair }} {{ review.get_rule_display }}</h3>
+      <h3 class="text-center">
+        {{ close }} 
+        {% if increase_rate > 0 %}
+        ↑
+        {% elif increase_rate < 0 %}
+        ↓
+        {% else %}
+        →
+        {% endif %}
+      </h3>
+      <a href="{% url 'Note:chart_image_review' id %}">
+        <img src="data:image/png;base64,{{ image }}" alt="Chart">
+      </a>
     </div>
     <div class="col">
       <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})</h1>
       <h1 class="text-center">{{ time_text }}</h1>
-      {# {% if option == "edit" %} #}
-      {# {% if type == "add" %} #}
-      {# <form class="" action="{% url 'Note:diary_create' year month day %}" method="post"> #}
-      {# {% elif type == "update" %} #}
-      {# <form class="" action="{% url 'Note:diary_update' obj.id %}" method="post"> #}
-      {# {% else %} #}
-      {# <form class="" action="{% url 'Note:diary_create' year month day %}" method="post"> #}
-      {# {% endif %} #}
-      {#   {% csrf_token %} #}
-      {#   {{ form.as_p }} #}
-      {#   {% if type == "add" %} #}
-      {#   <button type="submit" class="btn btn-primary btn-sm">登録</button> #}
-      {#   {% elif type == "update" %} #}
-      {#   <button type="submit" class="btn btn-primary btn-sm">更新</button> #}
-      {#   <a href="{% url 'Note:diary_delete' obj.id %}" class="btn btn-primary btn-sm">削除</a> #}
-      {#   {% else %} #}
-      {#   <button type="submit" class="btn btn-primary btn-sm">登録</button> #}
-      {#   {% endif %} #}
-      {# </form> #}
-      {# {% else %} #}
-      {# <div class="card" style="width: 100%;"> #}
-      {#   <div class="card-body"> #}
-      {#     {% if obj == None %} #}
-      {#     日記が存在しません． #}
-      {#     {% else %} #}
-      {#     {{ obj.text }} #}
-      {#     {% endif %} #}
-      {#   </div> #}
-      {# </div> #}
-      {# <div class="d-flex justify-content-end"> #}
-      {#   {% if obj == None %} #}
-      {#   <a href="{% url 'Note:diary_option' year month day "edit" %}" class="btn btn-primary btn-sm">作成</a> #}
-      {#   {% else %} #}
-      {#   <a href="{% url 'Note:diary_option' year month day "edit" %}" class="btn btn-primary btn-sm">編集</a> #}
-      {#   {% endif %} #}
-      {# </div> #}
-      {# {% endif %} #}
+      <p class="text-center">
+        <a href="{% url 'Note:review_later' id 1 %}" class="btn btn-primary btn-sm">+1分</a>
+        <a href="{% url 'Note:review_later' id 3 %}" class="btn btn-primary btn-sm">+3分</a>
+        <a href="{% url 'Note:review_later' id 5 %}" class="btn btn-primary btn-sm">+5分</a>
+        <a href="{% url 'Note:review_later' id 10 %}" class="btn btn-primary btn-sm">+10分</a>
+        <a href="{% url 'Note:review_later' id 15 %}" class="btn btn-primary btn-sm">+15分</a>
+        <a href="{% url 'Note:review_later' id 30 %}" class="btn btn-primary btn-sm">+30分</a>
+        <a href="{% url 'Note:review_later' id 60 %}" class="btn btn-primary btn-sm">+1時間</a>
+      </p>
+      <p class="text-center">
+        <a href="{% url 'Note:review_later' id -1 %}" class="btn btn-danger btn-sm">-1分</a>
+        <a href="{% url 'Note:review_later' id -3 %}" class="btn btn-danger btn-sm">-3分</a>
+        <a href="{% url 'Note:review_later' id -5 %}" class="btn btn-danger btn-sm">-5分</a>
+        <a href="{% url 'Note:review_later' id -10 %}" class="btn btn-danger btn-sm">-10分</a>
+        <a href="{% url 'Note:review_later' id -15 %}" class="btn btn-danger btn-sm">-15分</a>
+        <a href="{% url 'Note:review_later' id -30 %}" class="btn btn-danger btn-sm">-30分</a>
+        <a href="{% url 'Note:review_later' id -60 %}" class="btn btn-danger btn-sm">-1時間</a>
+      </p>
+      <form class="" action="{% url 'Note:review_update' id %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary btn-sm">保存・反映</button>
+        <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger btn-sm">削除</a>
+      </form>
     </div>
   </div>
 </div>

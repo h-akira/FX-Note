@@ -12,6 +12,7 @@ RULE = (
   ("1T","1分足"),
   ("3T","3分足"),
   ("5T","5分足"),
+  ("10T","10分足"),
   ("15T","15分足"),
   ("30T","30分足"),
   ("1H","1時間足"),
@@ -68,17 +69,25 @@ class HistoryLinkTable(models.Model):
   history = models.ForeignKey(HistoryTable, on_delete=models.CASCADE)
 
 class DiaryTable(models.Model):
+  user = models.ForeignKey(User,on_delete=models.CASCADE)
   date = models.DateField(unique=True)
   text = models.CharField(max_length=2047,null=True, blank=True)
-
+  class Meta:
+    constraints = [
+      models.UniqueConstraint(
+        fields=["user", "date"],
+        name="date_unique"
+      )
+    ]
 
 class ReviewTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
   name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
-  # pair = models.CharField(max_length=10, choices=PAIR)
+  pair = models.CharField(max_length=10, choices=PAIR)
   rule = models.CharField(max_length=10, choices=RULE)
   delta = models.IntegerField(default=150)
   dt = models.DateTimeField()
+  memo = models.CharField(max_length=511,null=True, blank=True)
 
 
 
