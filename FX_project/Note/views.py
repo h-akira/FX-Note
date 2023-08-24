@@ -494,9 +494,9 @@ def diary_delete(request, id):
 @login_required
 def review(request, id):
   _review = get_object_or_404(ReviewTable, pk=id)
-  image_USDJPY = chart_image_review(request, "USD/JPY", id, _HttpResponse=False)
-  image_EURJPY = chart_image_review(request, "EUR/JPY", id, _HttpResponse=False)
-  image_EURUSD = chart_image_review(request, "EUR/USD", id, _HttpResponse=False)
+  image_USDJPY, close_USDJPY = chart_image_review(request, "USD/JPY", id, _HttpResponse=False)
+  image_EURJPY, close_EURJPY = chart_image_review(request, "EUR/JPY", id, _HttpResponse=False)
+  image_EURUSD, close_EURUSD = chart_image_review(request, "EUR/USD", id, _HttpResponse=False)
   chart_tabs = [
     "USD/JPY",
     "EUR/JPY",
@@ -553,9 +553,14 @@ def chart_image_review(request, pair, id, _HttpResponse=True):
   df = lib.chart_settings.add_technical_columns(df)
   # 当日分
   df = df.iloc[-_review.delta:]
+  # 終値
+  close = df["Close"].iloc[-1]
   ### チャートを作成
   # 共通部分
   plot_args = lib.chart_settings.plot_args.copy()
+  # 横線
+  hlines=dict(hlines=[close],colors=["r"],linewidths=[0.1])
+  plot_args["hlines"] = hlines
   # テクニカル指標を追加
   plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
   # 画像の大きさ
@@ -572,7 +577,7 @@ def chart_image_review(request, pair, id, _HttpResponse=True):
     return HttpResponse(buf, content_type='image/png')
   else:
     image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-    return image_data
+    return image_data, close
     # htmldjangoにおいて以下のように記述することで出力できる:
     # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 
