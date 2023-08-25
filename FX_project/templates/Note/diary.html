@@ -7,7 +7,11 @@
       {% include 'Note/chart_tab.html' %}
     </div>
     <div class="col">
-      <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})</h1>
+      <h1 class="text-center">
+        <a href="{{ prev_link }}"> << </a>
+        {{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})
+        <a href="{{ next_link }}"> >> </a>
+      </h1>
       {% if option == "edit" %}
       {% if type == "add" %}
       <form class="" action="{% url 'Note:diary_create' year month day %}" method="post">
