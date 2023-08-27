@@ -505,7 +505,7 @@ def diary_delete(request, id):
 @login_required
 def review(request, id):
   _review = get_object_or_404(ReviewTable, pk=id)
-  image, close, increase_rate = chart_image_review(
+  image, close_bid, close_ask, increase_rate = chart_image_review(
     request,
     id,
     _HttpResponse=False,
@@ -526,7 +526,8 @@ def review(request, id):
     "time_text": dt.strftime('%H時%M分'),
     "id":id,
     "image" : image,
-    "close":close,
+    "close_bid":close_bid,
+    "close_ask":close_ask,
     "increase_rate" : increase_rate,
     "form":form
   }
@@ -542,7 +543,7 @@ def review_later(request, id, delta):
 
 
 @login_required
-def chart_image_review(request, id, _HttpResponse=True, _review=None):
+def chart_image_review(request, id, _HttpResponse=True, _review=None, BID_ASK="BID"):
   if _review == None:
     _review = get_object_or_404(ReviewTable, pk=id)
   # 為替データを取得
@@ -552,21 +553,36 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None):
     days = 250
   else:
     days = 10
-  df = lib.chart.GMO_dir2DataFrame(
-    os.path.join(os.path.dirname(__file__), "../data/rate"), 
-    pair=_review.pair,
-    date_range=[
-      (_review.dt-datetime.timedelta(days=days)).date(),
-      (_review.dt+datetime.timedelta(days=2)).date(),
-    ]
-  )
-  print(_review.dt.astimezone(timezone("Asia/Tokyo")))
-  print(df.index[-1])
-  df = df[df.index <= _review.dt.astimezone(timezone('Asia/Tokyo'))]
+  for bid_ask  in ["BID","ASK"]:
+    _df = lib.chart.GMO_dir2DataFrame(
+      os.path.join(os.path.dirname(__file__), "../data/rate"), 
+      pair=_review.pair,
+      date_range=[
+        (_review.dt-datetime.timedelta(days=days)).date(),
+        (_review.dt+datetime.timedelta(days=2)).date(),
+      ],
+      BID_ASK = bid_ask
+    )
+    _df = _df[_df.index <= _review.dt.astimezone(timezone('Asia/Tokyo'))]
+    if bid_ask == "BID":
+      df_BID == _df.copy()
+      if BID_ASK == "BID":
+        df = _df.copy()
+    else:
+      df_ASK == _df.copy()
+      if BID_ASK == "ASK":
+        df = _df.copy()
   # 終値
-  close = df["Close"].iloc[-1]
-  close_before = df["Close"].iloc[-2]
-  increase_rate = close - close_before
+  close_bid = df_bid["Close"].iloc[-1]
+  close_bid_before = df_bid["Close"].iloc[-2]
+  close_ask = df_ask["Close"].iloc[-1]
+  close_ask_before = df_ask["Close"].iloc[-2]
+  if BID_ASK == "BID":
+    increase_rate = close_bid - close_bid_before
+  elif BID_ASK == "ASK":
+    increase_rate = close_ask - close_ask_before
+  else:
+    raise ValueError
   # 足
   df = lib.chart.resample(df, _review.rule)
   # テクニカル指標を追加
@@ -595,7 +611,7 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None):
     return HttpResponse(buf, content_type='image/png')
   else:
     image_data = base64.b64encode(buf.getvalue()).decode("utf-8")
-    return image_data, close, increase_rate
+    return image_data, close_bid, close_ask, increase_rate
     # htmldjangoにおいて以下のように記述することで出力できる:
     # <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
 
