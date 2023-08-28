@@ -7,7 +7,8 @@
         "USD/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=21&n=USDJPY",
         "EUR/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=22&n=EURJPY",
         "GBP/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=23&n=GBPJPY",
-        "EUR/USD":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=31&n=EURUSD"
+        "EUR/USD":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=31&n=EURUSD",
+        "AUD/JPY":"https://tb.click-sec.com/fx/historical/historicalDataDownload.do?y={}&m={}&c=24&n=AUDJPY"
       }
     },
     "username" : "123456789",
