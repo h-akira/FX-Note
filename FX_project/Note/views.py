@@ -388,7 +388,8 @@ def calendar_index(request,year=None,month=None):
   _calendar.pop(0)
   _calendar[0] = ["日","月","火","水","木","金","土"]
   # todayに色をつけたいので
-  dt_now = datetime.datetime.now()
+  dt_now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)  # ＮＹ市場クローズにあわせる
+  # dt_now = datetime.datetime.now(timezone('Etc/GMT-3'))
   if dt_now.year == year and dt_now.month == month:
     today = str(dt_now.day)
   else:
