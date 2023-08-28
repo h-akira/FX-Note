@@ -419,29 +419,34 @@ def diary(request, year, month, day, option=None):
   image_EURJPY = chart_image_day(request, "EUR/JPY", year, month, day, _HttpResponse=False)
   image_EURUSD = chart_image_day(request, "EUR/USD", year, month, day, _HttpResponse=False)
   image_GBPJPY = chart_image_day(request, "GBP/JPY", year, month, day, _HttpResponse=False)
+  image_AUDJPY = chart_image_day(request, "AUD/JPY", year, month, day, _HttpResponse=False)
   chart_tabs = [
     "USD/JPY",
     "EUR/JPY",
     "EUR/USD",
-    "GBP/JPY"
+    "GBP/JPY",
+    "AUD/JPY"
   ]
   chart_urls = [
     reverse('Note:chart_image_day', args=['USDJPY', year, month, day]),
     reverse('Note:chart_image_day', args=['EURJPY', year, month, day]),
     reverse('Note:chart_image_day', args=['EURUSD', year, month, day]),
-    reverse('Note:chart_image_day', args=['GBPJPY', year, month, day])
+    reverse('Note:chart_image_day', args=['GBPJPY', year, month, day]),
+    reverse('Note:chart_image_day', args=['AUDJPY', year, month, day])
   ]
   chart_images = [
     image_USDJPY,
     image_EURJPY,
     image_EURUSD,
-    image_GBPJPY
+    image_GBPJPY,
+    image_AUDJPY
   ]
   chart_heads = [
     "USD/JPY 15分足",
     "EUR/JPY 15分足",
     "EUR/USD 15分足",
-    "GBP/JPY 15分足"
+    "GBP/JPY 15分足",
+    "AUD/JPY 15分足"
   ]
   next_dt = datetime.datetime(year, month, day) + datetime.timedelta(days=1)
   prev_dt = datetime.datetime(year, month, day) - datetime.timedelta(days=1)
