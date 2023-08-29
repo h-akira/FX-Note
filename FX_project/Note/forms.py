@@ -1,5 +1,5 @@
 from django import forms
-from .models import ChartTable, DiaryTable, ReviewTable
+from .models import ChartTable, DiaryTable, ReviewTable, PositionTable
 
 class ChartForm(forms.ModelForm):
   class Meta:
@@ -20,9 +20,25 @@ class DiaryForm(forms.ModelForm):
 class ReviewForm(forms.ModelForm):
   class Meta:
     model = ReviewTable
-    fields = ("name", "rule", "pair", "dt", "delta", "memo")
+    # fields = ("name", "rule", "pair", "dt", "delta", "memo")
+    fields = ("name", "rule", "pair", "delta", "memo")
     widgets = {
       'name': forms.Textarea(attrs={'rows': 1, 'cols': 50}),
-      'memo': forms.Textarea(attrs={'rows': 5, 'cols': 50}),
+      'memo': forms.Textarea(attrs={'rows': 3, 'cols': 50}),
       'dt': forms.DateTimeInput(attrs={"type": "datetime-local"})
     }
+
+class PositionSpeedForm(forms.ModelForm):
+  class Meta:
+    model = PositionTable
+    fields = ("quantity", "limit", "stop", "pair", "position_datetime")
+    widgets = {
+      'pair': forms.HiddenInput(),
+      'position_datetime': forms.HiddenInput()
+    }
+    
+
+
+
+
+

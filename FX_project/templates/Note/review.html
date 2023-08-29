@@ -42,10 +42,84 @@
       </p>
       <form class="" action="{% url 'Note:review_update' id %}" method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary btn-sm">保存・反映</button>
-        <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger btn-sm">削除</a>
+        {# {{ review_form.as_p }} #}
+        <div class="text-center">
+          <p>
+            保存名：{{ review_form.name }}
+          </p>
+          <p>
+            足：{{ review_form.rule }}
+            通貨ペア：{{ review_form.pair }}
+            表示本数：{{ review_form.delta }}
+          </p>
+          <button type="submit" class="btn btn-primary btn-sm">保存・反映</button>
+          <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger btn-sm">削除</a>
+        </div>
       </form>
+      <br>
+      <h1 class="text-center">注文</h1>
+      <form class="" action="{% url 'Note:speed_order' id %}" method="post">
+        {% csrf_token %}
+        <div class="text-center">
+          {{ position_speed_form.as_p }}
+          <button type="submit" class="btn btn-primary" name="button_type" value="sell">売り</button>
+          <button type="submit" class="btn btn-danger" name="button_type" value="buy">買い</button>
+        </div>
+        {# <button type="submit" class="btn btn-primary btn-sm">保存・反映</button> #}
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="table-responsive">
+        <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
+          <tbody>
+            <tr class="table-light text-center border-dark">
+              <th scope="col" style="width:100px;">
+                通貨ペア
+              </th>
+              <th scope="col" style="width:200px;">
+                約定日時
+              </th>
+              <th scope="col" style="width:80px;">
+                建玉数量
+              </th>
+              <th scope="col" style="width:100px;">
+                建玉レート
+              </th>
+              <th scope="col" style="width:100px;">
+                評価損益
+              </th>
+              <th scope="col" style="width:100px;">
+                操作
+              </th>
+            </tr>
+            {% for position in open_positions %}
+            <tr class="text-center table-success border-dark">
+              <td>
+                {{ position.pair }}
+              </td>
+              <td>
+                {{ position.position_datetime }}
+              </td>
+              <td>
+                {{ position.quantity }}
+              </td>
+              <td>
+                {{ position.position_rate }}
+              </td>
+              <td>
+                hgoe
+              </td>
+              <td>
+                <a href="#" class="btn btn-danger btn-sm">成行</a>
+                <a href="#" class="btn btn-danger btn-sm">変更</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

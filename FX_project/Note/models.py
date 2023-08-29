@@ -23,7 +23,8 @@ PAIR = (
   ("USD/JPY", "USD/JPY"),
   ("EUR/JPY","EUR/JPY"),
   ("EUR/USD","EUR/USD"),
-  ("GBP/JPY","GBP/JPY")
+  ("GBP/JPY","GBP/JPY"),
+  ("AUD/JPY","AUD/JPY")
 )
 
 class HistoryTable(models.Model):
@@ -88,6 +89,21 @@ class ReviewTable(models.Model):
   delta = models.IntegerField(default=150)
   dt = models.DateTimeField()
   memo = models.CharField(max_length=511,null=True, blank=True)
+
+class PositionTable(models.Model):
+  review = models.ForeignKey(ReviewTable, on_delete=models.CASCADE)
+  pair = models.CharField(max_length=10, choices=PAIR)
+  quantity = models.FloatField()
+  buy_sell = models.CharField(max_length=10, choices=BUY_SELL)
+  position_datetime = models.DateTimeField()
+  position_rate = models.FloatField()
+  market = models.BooleanField(default=False)  # 成行での決済が実行された場合True
+  limit = models.FloatField(null=True, blank=True)
+  stop = models.FloatField(null=True, blank=True)
+  profit = models.FloatField(null=True, blank=True)
+  settlement_datetime = models.DateTimeField(null=True, blank=True)
+  settlement_rate = models.FloatField(null=True, blank=True)
+
 
 
 

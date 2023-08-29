@@ -12,9 +12,10 @@ from django.db.models import Avg
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.urls import reverse
+from django.db.models import Q
 # modelsとforms
-from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable, ReviewTable
-from .forms import ChartForm, DiaryForm, ReviewForm
+from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable, ReviewTable, PositionTable
+from .forms import ChartForm, DiaryForm, ReviewForm, PositionSpeedForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import lib.chart
@@ -282,7 +283,6 @@ def histories2edit(request):
   if len(timezones) != timezones.count(timezones[0]):
     raise Exception
   pairs = [i[0] for i in histories.values_list("pair")]
-  print(pairs)
   if len(pairs) != pairs.count(pairs[0]):
     raise Exception
   ave = datetime.datetime.fromtimestamp(sum(dts)/len(dts),tz=timezones[0])
@@ -338,7 +338,6 @@ def chart_edit(request, id):
 def chart_add(request):
   form = ChartForm(request.POST)
   histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
-  print(histories)
   if form.is_valid():
     # latest_chart = form.save()
     instance = form.save(commit=False)  # まだDBには保存しない
@@ -412,6 +411,7 @@ def calendar_index(request,year=None,month=None):
 
 @login_required
 def diary(request, year, month, day, option=None):
+  dt = datetime.datetime.now(timezone("Asia/Tokyo")) - datetime.timedelta(days=7)
   try:
     obj = DiaryTable.objects.get(user=request.user, date=datetime.date(year,month,day))
   except DiaryTable.DoesNotExist:
@@ -451,7 +451,6 @@ def diary(request, year, month, day, option=None):
   ]
   next_dt = datetime.datetime(year, month, day) + datetime.timedelta(days=1)
   prev_dt = datetime.datetime(year, month, day) - datetime.timedelta(days=1)
-  print(next_dt)
   context = {
     "year":year, 
     "month":month,
@@ -517,12 +516,18 @@ def review(request, id):
     _HttpResponse=False,
     _review=_review
   )
-  form = ReviewForm(instance=_review)
-  print("------------")
-  print(_review.dt)
+  review_form = ReviewForm(instance=_review)
   dt = _review.dt.astimezone(timezone("Asia/Tokyo"))
-  print(dt)
-  print("------------")
+  position_speed_form = PositionSpeedForm(
+    initial = {
+      "position_datetime" : _review.dt,
+      "pair" : _review.pair
+    }
+  )
+  open_positions = PositionTable.objects.filter(
+    Q(settlement_datetime__lt=_review.dt) | Q(settlement_datetime=None) ,
+    review=_review 
+  ).order_by("id")
   context = {
     "review":_review,
     "year":dt.year, 
@@ -535,7 +540,9 @@ def review(request, id):
     "close_bid":close_bid,
     "close_ask":close_ask,
     "increase_rate" : increase_rate,
-    "form":form
+    "review_form":review_form,
+    "position_speed_form":position_speed_form,
+    "open_positions":open_positions
   }
   return render(request, 'Note/review.html', context)
 
@@ -571,22 +578,24 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None, BID_ASK="B
     )
     _df = _df[_df.index <= _review.dt.astimezone(timezone('Asia/Tokyo'))]
     if bid_ask == "BID":
-      df_BID == _df.copy()
+      df_BID = _df.copy()
       if BID_ASK == "BID":
         df = _df.copy()
     else:
-      df_ASK == _df.copy()
+      df_ASK = _df.copy()
       if BID_ASK == "ASK":
         df = _df.copy()
   # 終値
-  close_bid = df_bid["Close"].iloc[-1]
-  close_bid_before = df_bid["Close"].iloc[-2]
-  close_ask = df_ask["Close"].iloc[-1]
-  close_ask_before = df_ask["Close"].iloc[-2]
+  close_bid = df_BID["Close"].iloc[-1]
+  close_bid_before = df_BID["Close"].iloc[-2]
+  close_ask = df_ASK["Close"].iloc[-1]
+  close_ask_before = df_ASK["Close"].iloc[-2]
   if BID_ASK == "BID":
     increase_rate = close_bid - close_bid_before
+    close = close_bid
   elif BID_ASK == "ASK":
     increase_rate = close_ask - close_ask_before
+    close = close_ask
   else:
     raise ValueError
   # 足
@@ -661,5 +670,35 @@ def review_delete(request, id):
   _review = get_object_or_404(ReviewTable, pk=id)
   _review.delete()
   return redirect("Note:review_index")
+
+@login_required
+def speed_order(request, id):
+  if request.method == 'POST':
+    _review = get_object_or_404(ReviewTable, pk=id)
+    form = PositionSpeedForm(request.POST)
+    if form.is_valid():
+      instance = form.save(commit=False)  # まだDBには保存しない
+      instance.review = _review
+      button_type = request.POST.get('button_type')
+      if button_type == 'buy':
+        instance.buy_sell = "buy"
+        BID_ASK = "ASK"
+      elif button_type == 'sell':
+        instance.buy_sell = "sell"
+        BID_ASK = "BID"
+      position_rate = lib.chart.get_rate(
+        os.path.join(os.path.dirname(__file__),"../data/rate"),
+        pair="USDJPY",
+        dt=instance.position_datetime,
+        BID_ASK = BID_ASK
+      )
+      instance.position_rate = position_rate
+      instance.save()  # DBに保存
+      return redirect("Note:review", id)
+    else:
+      print("not valid")
+      return redirect("Note:review_index")
+
+
 
 
