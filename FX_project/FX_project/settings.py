@@ -36,8 +36,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Note.apps.NoteConfig',
     'home.apps.HomeConfig',
-    'django_boost'
+    'django_boost',
+    'django.contrib.humanize'
 ]
+
+NUMBER_GROUPING = 3
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

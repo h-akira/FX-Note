@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load boost %}
+{% load humanize %} 
 {% block title %}レビュー{% endblock title %}
 {% block content %}
 <div class="container-fluid custom-container">
@@ -71,12 +73,16 @@
   </div>
   <div class="row">
     <div class="col">
+      <h1>保有建玉</h1>
       <div class="table-responsive">
         <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
           <tbody>
             <tr class="table-light text-center border-dark">
               <th scope="col" style="width:100px;">
                 通貨ペア
+              </th>
+              <th scope="col" style="width:50px;">
+                売買
               </th>
               <th scope="col" style="width:200px;">
                 約定日時
@@ -88,16 +94,40 @@
                 建玉レート
               </th>
               <th scope="col" style="width:100px;">
+                評価レート
+              </th>
+              <th scope="col" style="width:100px;">
                 評価損益
+              </th>
+              <th scope="col" style="width:100px;">
+                指値
+              </th>
+              <th scope="col" style="width:100px;">
+                逆指値
               </th>
               <th scope="col" style="width:100px;">
                 操作
               </th>
             </tr>
-            {% for position in open_positions %}
+            {% for position, evaluation, form in open_positions_zip %}
             <tr class="text-center table-success border-dark">
               <td>
                 {{ position.pair }}
+              </td>
+              <td>
+                {% if position.buy_sell == "buy" %}
+                <div class="text-danger">
+                  買
+                </div>
+                {% elif position.buy_sell == "sell" %}
+                <div class="text-primary">
+                  売
+                </div>
+                {% else %}
+                <div>
+                  {{ history.buy_sell }}
+                </div>
+                {% endif %}
               </td>
               <td>
                 {{ position.position_datetime }}
@@ -109,11 +139,122 @@
                 {{ position.position_rate }}
               </td>
               <td>
-                hgoe
+                {{ evaluation.rate }}
               </td>
               <td>
-                <a href="#" class="btn btn-danger btn-sm">成行</a>
-                <a href="#" class="btn btn-danger btn-sm">変更</a>
+                {% if evaluation.profit > 0 %}
+                +{{ evaluation.profit|intcomma }}
+                {% elif evaluation.profit < 0 %}
+                <div class="text-danger">
+                  {{ evaluation.profit|intcomma }}
+                </div>
+                {% else %}
+                {{ evaluation.profit|intcomma }}
+                {% endif %}
+              </td>
+              <td>
+                {{ position.limit|default_if_none:'' }}
+              </td>
+              <td>
+                {{ position.stop|default_if_none:'' }}
+              </td>
+              <td>
+                <form class="" action="{% url 'Note:market_settlement' position.id %}" method="post">
+                  {% csrf_token %}
+                  {{ form.as_p }}
+                  <button type="submit" class="btn btn-primary btn-sm">成行</button>
+                  <a href="{% url 'Note:position_update' position.id %}" class="btn btn-danger btn-sm">変更</a>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      <h1>決済済み建玉</h1>
+      <div class="table-responsive">
+        <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
+          <tbody>
+            <tr class="table-light text-center border-dark">
+              <th scope="col" style="width:100px;">
+                通貨ペア
+              </th>
+              <th scope="col" style="width:50px;">
+                売買
+              </th>
+              <th scope="col" style="width:200px;">
+                約定日時
+              </th>
+              <th scope="col" style="width:80px;">
+                建玉数量
+              </th>
+              <th scope="col" style="width:100px;">
+                建玉レート
+              </th>
+              <th scope="col" style="width:100px;">
+                執行条件
+              </th>
+              <th scope="col" style="width:200px;">
+                決済日時
+              </th>
+              <th scope="col" style="width:100px;">
+                決済レート
+              </th>
+              <th scope="col" style="width:100px;">
+                決済損益
+              </th>
+            </tr>
+            {% for position in close_positions %}
+            <tr class="text-center table-success border-dark">
+              <td>
+                {{ position.pair }}
+              </td>
+              <td>
+                {% if position.buy_sell == "buy" %}
+                <div class="text-danger">
+                  買
+                </div>
+                {% elif position.buy_sell == "sell" %}
+                <div class="text-primary">
+                  売
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                {{ position.position_datetime }}
+              </td>
+              <td>
+                {{ position.quantity }}
+              </td>
+              <td>
+                {{ position.position_rate }}
+              </td>
+              <td>
+                {% if position.condition == "market" %}
+                成行
+                {% elif position.condition == "limit" %}
+                指値
+                {% elif position.condition == "stop" %}
+                逆指値
+                {% else %}
+                エラー
+                {% endif %}
+              </td>
+              <td>
+                {{ position.settlement_datetime }}
+              </td>
+              <td>
+                {{ position.settlement_rate }}
+              </td>
+              <td>
+                {% if position.profit > 0 %}
+                +{{ position.profit|intcomma }}
+                {% elif position.profit < 0 %}
+                <div class="text-danger">
+                  {{ position.profit|intcomma }}
+                </div>
+                {% else %}
+                {{ position.profit|intcomma }}
+                {% endif %}
               </td>
             </tr>
             {% endfor %}

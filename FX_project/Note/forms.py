@@ -37,8 +37,21 @@ class PositionSpeedForm(forms.ModelForm):
       'position_datetime': forms.HiddenInput()
     }
     
+class PositionMarketForm(forms.ModelForm):
+  class Meta:
+    model = PositionTable
+    fields = ("condition", "limit", "stop","profit", "settlement_datetime", "settlement_rate")
+  def __init__(self, *args, **kwargs):
+    super(PositionMarketForm, self).__init__(*args, **kwargs)
+    self.fields['limit'].initial = None
+    self.fields['stop'].initial = None
+    self.fields['condition'].initial = "market"
+    for field_name in self.fields:
+      self.fields[field_name].widget = forms.HiddenInput()
 
-
-
+class PositionUpdateForm(forms.ModelForm):
+  class Meta:
+    model = PositionTable
+    fields = ("limit", "stop")
 
 

@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.db.models import Q
 # modelsとforms
 from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable, ReviewTable, PositionTable
-from .forms import ChartForm, DiaryForm, ReviewForm, PositionSpeedForm
+from .forms import ChartForm, DiaryForm, ReviewForm, PositionSpeedForm, PositionMarketForm, PositionUpdateForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import lib.chart
@@ -524,10 +524,69 @@ def review(request, id):
       "pair" : _review.pair
     }
   )
-  open_positions = PositionTable.objects.filter(
-    Q(settlement_datetime__lt=_review.dt) | Q(settlement_datetime=None) ,
-    review=_review 
+  positions = PositionTable.objects.filter(review=_review)
+  open_positions = positions.filter(
+    Q(settlement_datetime__gt=_review.dt) | Q(settlement_datetime=None),
   ).order_by("id")
+  close_positions = positions.filter(
+    settlement_datetime__lte=_review.dt
+  ).order_by("-settlement_datetime")
+  evaluations = []
+  forms = []
+  for position in open_positions:
+    if position.buy_sell == "buy":
+      settlement_bid_ask = "BID"
+    elif position.buy_sell == "sell":
+      settlement_bid_ask = "ASK"
+    else:
+      raise Exception
+    rate = lib.chart.get_rate(
+      os.path.join(os.path.dirname(__file__),"../data/rate"),
+      pair = position.pair,
+      dt = dt,
+      BID_ASK = settlement_bid_ask
+    )
+    if position.pair[-3:] == "JPY":  # クロス円，1単位10000通貨
+      if position.buy_sell == "buy":
+        profit = round((rate - position.position_rate) * position.quantity * 10000)
+      elif position.buy_sell == "sell":
+        profit = -round((rate - position.position_rate) * position.quantity * 10000)
+      else:
+        raise Exception
+    else:  # それ以外，1単位1通貨
+      # クロス通貨で利益を計算
+      if position.buy_sell == "buy":
+        profit = (rate - position.position_rate) * position.quantity * 10000
+      elif position.buy_sell == "sell":
+        profit = -((rate - position.position_rate) * position.quantity) * 10000
+      else:
+        raise Exception
+      # 円にする
+      to_yen_pair = f"{position.pair[-3:]}/JPY"
+      to_yen_rate = lib.chart.get_rate(
+        os.path.join(os.path.dirname(__file__),"../data/rate"),
+        pair = to_yen_pair,
+        dt = dt,
+        BID_ASK = "BID"
+      )
+      print(to_yen_rate)
+      profit = round(profit * to_yen_rate)
+    evaluations.append(
+      {
+        "rate":rate,
+        "profit":profit
+      }
+    )
+    forms.append(
+      PositionMarketForm(
+        initial={
+          "settlement_datetime":dt,
+          "settlement_rate":rate,
+          "profit":profit
+        }
+      )
+    )
+  # open_positions = list(open_positions.values())
   context = {
     "review":_review,
     "year":dt.year, 
@@ -542,7 +601,9 @@ def review(request, id):
     "increase_rate" : increase_rate,
     "review_form":review_form,
     "position_speed_form":position_speed_form,
-    "open_positions":open_positions
+    "open_positions_zip":zip(open_positions, evaluations, forms),
+    "close_positions":close_positions,
+    "evaluations":evaluations
   }
   return render(request, 'Note/review.html', context)
 
@@ -688,7 +749,7 @@ def speed_order(request, id):
         BID_ASK = "BID"
       position_rate = lib.chart.get_rate(
         os.path.join(os.path.dirname(__file__),"../data/rate"),
-        pair="USDJPY",
+        pair=instance.pair,
         dt=instance.position_datetime,
         BID_ASK = BID_ASK
       )
@@ -699,6 +760,29 @@ def speed_order(request, id):
       print("not valid")
       return redirect("Note:review_index")
 
+@login_required
+def market_settlement(request,id):
+  _position = get_object_or_404(PositionTable, pk=id)
+  form = PositionMarketForm(request.POST, instance=_position)
+  if form.is_valid():
+    form.save()
+    return redirect("Note:review",_position.review.id)
+
+@login_required
+def position_update(request,id):
+  _position = get_object_or_404(PositionTable, pk=id)
+  if request.method == 'POST':
+    form = PositionUpdateForm(request.POST, instance=_position)
+    if form.is_valid():
+      form.save()
+      return redirect("Note:review",_position.review.id)
+  else:
+    form = PositionUpdateForm(instance=_position)
+    context = {
+      "form":form,
+      "position":_position
+    }
+    return render(request, 'Note/position_update.html', context)
 
 
 

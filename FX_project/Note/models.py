@@ -97,10 +97,10 @@ class PositionTable(models.Model):
   buy_sell = models.CharField(max_length=10, choices=BUY_SELL)
   position_datetime = models.DateTimeField()
   position_rate = models.FloatField()
-  market = models.BooleanField(default=False)  # 成行での決済が実行された場合True
+  condition = models.CharField(max_length=10, choices=CONDITION, null=True, blank=True)
   limit = models.FloatField(null=True, blank=True)
   stop = models.FloatField(null=True, blank=True)
-  profit = models.FloatField(null=True, blank=True)
+  profit = models.IntegerField(null=True, blank=True)
   settlement_datetime = models.DateTimeField(null=True, blank=True)
   settlement_rate = models.FloatField(null=True, blank=True)
 
