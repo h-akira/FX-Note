@@ -929,7 +929,7 @@ def get_profit(pair, buy_sell, quantity, position_rate, settlement_datetime, set
   if pair[-3:] == "JPY":  # クロス円，1単位10000通貨
     if buy_sell == "buy":
       profit = round((settlement_rate - position_rate) * quantity * 10000)
-    elif position.buy_sell == "sell":
+    elif buy_sell == "sell":
       profit = -round((settlement_rate - position_rate) * quantity * 10000)
     else:
       raise Exception
