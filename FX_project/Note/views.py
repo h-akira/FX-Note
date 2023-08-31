@@ -935,9 +935,9 @@ def get_profit(pair, buy_sell, quantity, position_rate, settlement_datetime, set
       raise Exception
   else:  # それ以外，1単位1通貨
     # クロス通貨で利益を計算
-    if position.buy_sell == "buy":
+    if buy_sell == "buy":
       profit = (settlement_rate - position_rate) * quantity * 10000
-    elif position.buy_sell == "sell":
+    elif buy_sell == "sell":
       profit = -((settlement_rate - position_rate) * quantity) * 10000
     else:
       raise Exception
