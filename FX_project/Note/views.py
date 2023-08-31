@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.db.models import Q
 # modelsとforms
 from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable, ReviewTable, PositionTable
-from .forms import ChartForm, DiaryForm, ReviewForm, PositionSpeedForm, PositionMarketForm, PositionUpdateForm
+from .forms import ChartForm, DiaryForm, ReviewForm, ReviewUpdateForm, PositionSpeedForm, PositionMarketForm, PositionUpdateForm
 # 独自関数
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import lib.chart
@@ -518,7 +518,7 @@ def review(request, id):
     _HttpResponse=False,
     _review=_review
   )
-  review_form = ReviewForm(instance=_review)
+  review_form = ReviewUpdateForm(instance=_review)
   dt = _review.dt.astimezone(timezone("Asia/Tokyo"))
   position_speed_form = PositionSpeedForm(
     initial = {
@@ -750,9 +750,13 @@ def review_index(request):
 @login_required
 def review_update(request,id):
   _review = get_object_or_404(ReviewTable, pk=id)
-  form = ReviewForm(request.POST, instance=_review)
+  form = ReviewUpdateForm(request.POST, instance=_review)
   if form.is_valid():
     form.save()
+    return redirect("Note:review",id)
+  else:
+    print(form.errors)
+    print(request.POST)
     return redirect("Note:review",id)
 
 @login_required
@@ -942,11 +946,11 @@ def get_profit(pair, buy_sell, quantity, position_rate, settlement_datetime, set
     else:
       raise Exception
     # 円にする
-    to_yen_pair = f"{position.pair[-3:]}/JPY"
+    to_yen_pair = f"{pair[-3:]}/JPY"
     to_yen_rate = lib.chart.get_rate(
       dir_name = dir_name, 
       pair = to_yen_pair,
-      dt = dt,
+      dt = settlement_datetime,
       BID_ASK = "BID"
     )
     profit = round(profit * to_yen_rate)

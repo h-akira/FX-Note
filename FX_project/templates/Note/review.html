@@ -54,6 +54,9 @@
             通貨ペア：{{ review_form.pair }}
             表示本数：{{ review_form.delta }}
           </p>
+          <p>
+            メモ：{{ review_form.memo }}
+          </p>
           <button type="submit" class="btn btn-primary btn-sm">保存・反映</button>
           <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger btn-sm">削除</a>
         </div>

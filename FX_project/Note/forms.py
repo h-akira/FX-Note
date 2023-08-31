@@ -28,6 +28,16 @@ class ReviewForm(forms.ModelForm):
       'dt': forms.DateTimeInput(attrs={"type": "datetime-local"})
     }
 
+class ReviewUpdateForm(forms.ModelForm):
+  class Meta:
+    model = ReviewTable
+    # fields = ("name", "rule", "pair", "dt", "delta", "memo")
+    fields = ("name", "rule", "pair", "delta", "memo")
+    widgets = {
+      'name': forms.Textarea(attrs={'rows': 1, 'cols': 50}),
+      'memo': forms.Textarea(attrs={'rows': 3, 'cols': 50}),
+    }
+
 class PositionSpeedForm(forms.ModelForm):
   class Meta:
     model = PositionTable
