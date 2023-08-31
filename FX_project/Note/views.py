@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.urls import reverse
 from django.db.models import Q
+from django.db.models import Sum
 # modelsとforms
 from .models import HistoryTable, ChartTable, HistoryLinkTable, DiaryTable, ReviewTable, PositionTable
 from .forms import ChartForm, DiaryForm, ReviewForm, ReviewUpdateForm, PositionSpeedForm, PositionMarketForm, PositionUpdateForm
@@ -556,43 +557,6 @@ def review(request, id):
       settlement_datetime = dt,
       settlement_rate = rate
     )
-    # if position.buy_sell == "buy":
-    #   settlement_bid_ask = "BID"
-    # elif position.buy_sell == "sell":
-    #   settlement_bid_ask = "ASK"
-    # else:
-    #   raise Exception
-    # rate = lib.chart.get_rate(
-    #   os.path.join(os.path.dirname(__file__),"../data/rate"),
-    #   pair = position.pair,
-    #   dt = dt,
-    #   BID_ASK = settlement_bid_ask
-    # )
-    # if position.pair[-3:] == "JPY":  # クロス円，1単位10000通貨
-    #   if position.buy_sell == "buy":
-    #     profit = round((rate - position.position_rate) * position.quantity * 10000)
-    #   elif position.buy_sell == "sell":
-    #     profit = -round((rate - position.position_rate) * position.quantity * 10000)
-    #   else:
-    #     raise Exception
-    # else:  # それ以外，1単位1通貨
-    #   # クロス通貨で利益を計算
-    #   if position.buy_sell == "buy":
-    #     profit = (rate - position.position_rate) * position.quantity * 10000
-    #   elif position.buy_sell == "sell":
-    #     profit = -((rate - position.position_rate) * position.quantity) * 10000
-    #   else:
-    #     raise Exception
-    #   # 円にする
-    #   to_yen_pair = f"{position.pair[-3:]}/JPY"
-    #   to_yen_rate = lib.chart.get_rate(
-    #     os.path.join(os.path.dirname(__file__),"../data/rate"),
-    #     pair = to_yen_pair,
-    #     dt = dt,
-    #     BID_ASK = "BID"
-    #   )
-    #   print(to_yen_rate)
-    #   profit = round(profit * to_yen_rate)
     evaluations.append(
       {
         "rate":rate,
@@ -609,6 +573,8 @@ def review(request, id):
       )
     )
   # open_positions = list(open_positions.values())
+  evaluation_profit_all = sum([e["profit"] for e in evaluations])
+  settlement_profit_all = close_positions.aggregate(Sum("profit"))["profit__sum"]
   context = {
     "review":_review,
     "year":dt.year, 
@@ -625,7 +591,9 @@ def review(request, id):
     "position_speed_form":position_speed_form,
     "open_positions_zip":zip(open_positions, evaluations, forms),
     "close_positions":close_positions,
-    "evaluations":evaluations
+    "evaluations":evaluations,
+    "evaluation_profit_all": evaluation_profit_all,
+    "settlement_profit_all": settlement_profit_all
   }
   return render(request, 'Note/review.html', context)
 
@@ -697,32 +665,42 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None, BID_ASK="B
   ).order_by("id")
   # hlines=dict(hlines=[close],colors=["#ff7f50"],linewidths=[0.1], linestyle=["-"])
   hlines=dict(hlines=[close],colors=["b"],linewidths=[0.1], linestyle=["-"])
-  # linewidthsを設定した状態で破線を同時に引けないようなのでaddplot
   plot_args["hlines"] = hlines
+  # 保有ポジションの注文レート
+  # linewidthsを設定した状態で破線を同時に引けないようなのでaddplot
   position_lines = []
+  # ボリンジャーバンドの範囲内+少々の線のみ表示する
+  bb_max = df["bb_up_3"].max()
+  bb_min = df["bb_down_3"].min()
+  bb_delta = bb_max-bb_min
+  bb_max += bb_delta * 0.1
+  bb_min -= bb_delta * 0.1
   for position in open_positions:
     if _review.pair == position.pair:
-      if position.buy_sell == "buy":
-        position_lines.append(
-          mpf.make_addplot([position.position_rate]*len(df), panel=0, color='r', linestyle='--', linewidths=0.1)
-        )
-      elif position.buy_sell == "sell":
-        position_lines.append(
-          mpf.make_addplot([position.position_rate]*len(df), panel=0, color='b', linestyle='--', linewidths=0.1)
-        )
+      if bb_min <= position.position_rate <= bb_max:
+        if position.buy_sell == "buy":
+          position_lines.append(
+            mpf.make_addplot([position.position_rate]*len(df), panel=0, color='r', linestyle='--', linewidths=0.1)
+          )
+        elif position.buy_sell == "sell":
+          position_lines.append(
+            mpf.make_addplot([position.position_rate]*len(df), panel=0, color='b', linestyle='--', linewidths=0.1)
+          )
       if position.limit:
-        position_lines.append(
-          mpf.make_addplot([position.limit]*len(df), panel=0, color='#ff00ff', linestyle='-', linewidths=0.1)
-        )
+        if bb_min <= position.limit <= bb_max:
+          position_lines.append(
+            mpf.make_addplot([position.limit]*len(df), panel=0, color='#ff00ff', linestyle='-', linewidths=0.1)
+          )
       if position.stop:
-        position_lines.append(
-          mpf.make_addplot([position.stop]*len(df), panel=0, color='#ff00ff', linestyle='-', linewidths=0.1)
-        )
+        if bb_min <= position.stop <= bb_max:
+          position_lines.append(
+            mpf.make_addplot([position.stop]*len(df), panel=0, color='#ff00ff', linestyle='-', linewidths=0.1)
+          )
   plot_args["addplot"] = position_lines
   # テクニカル指標を追加
   plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
   # 画像の大きさ
-  plot_args["figsize"] = (13,7)
+  plot_args["figsize"] = (13,9)
   # 画像の出力先
   buf = io.BytesIO()
   plot_args["savefig"] = {'fname':buf,'dpi':100}

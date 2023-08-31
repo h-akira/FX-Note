@@ -6,6 +6,14 @@
 <div class="container-fluid custom-container">
   <div class="row">
     <div class="col-8">
+      <a href="{% url 'Note:chart_image_review' id %}">
+        <img src="data:image/png;base64,{{ image }}" alt="Chart">
+      </a>
+    </div>
+    <div class="col">
+      {# <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})</h1> #}
+      {# <h1 class="text-center">{{ time_text }}</h1> #}
+      <h3 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }}) {{ time_text }}</h3>
       <h3 class="text-center">{{ review.pair }} {{ review.get_rule_display }}</h3>
       <h3 class="text-center">
         {{ close_bid }} 
@@ -17,30 +25,51 @@
         →
         {% endif %}
       </h3>
-      <a href="{% url 'Note:chart_image_review' id %}">
-        <img src="data:image/png;base64,{{ image }}" alt="Chart">
-      </a>
-    </div>
-    <div class="col">
-      <h1 class="text-center">{{ year }}年{{ month }}月{{ day }}日 ({{ weekday }})</h1>
-      <h1 class="text-center">{{ time_text }}</h1>
+      <h5 class="text-center">
+        評価損益：
+        {% if evaluation_profit_all > 0 %}
+        +{{ evaluation_profit_all|intcomma }}
+        {% elif evaluation_profit_all < 0 %}
+        <span class="text-danger">
+        {{ evaluation_profit_all|intcomma }}
+        </span>
+        {% else %}
+       {{ evaluation_profit_all|intcomma }}
+       {% endif %}
+      </h5>
+      <h5 class="text-center">
+        決済損益：
+        {% if settlement_profit_all > 0 %}
+        +{{ settlement_profit_all|intcomma }}
+        {% elif settlement_profit_all < 0 %}
+        <span class="text-danger">
+        {{ settlement_profit_all|intcomma }}
+        </span>
+        {% else %}
+       {{ settlement_profit_all|intcomma }}
+       {% endif %}
+      </h5>
       <p class="text-center">
-        <a href="{% url 'Note:review_later' id 1 %}" class="btn btn-primary btn-sm">+1分</a>
-        <a href="{% url 'Note:review_later' id 3 %}" class="btn btn-primary btn-sm">+3分</a>
-        <a href="{% url 'Note:review_later' id 5 %}" class="btn btn-primary btn-sm">+5分</a>
-        <a href="{% url 'Note:review_later' id 10 %}" class="btn btn-primary btn-sm">+10分</a>
-        <a href="{% url 'Note:review_later' id 15 %}" class="btn btn-primary btn-sm">+15分</a>
-        <a href="{% url 'Note:review_later' id 30 %}" class="btn btn-primary btn-sm">+30分</a>
-        <a href="{% url 'Note:review_later' id 60 %}" class="btn btn-primary btn-sm">+1時間</a>
+        <a href="{% url 'Note:review_later' id 1 %}" class="btn btn-primary btn-sm">+1m</a>
+        <a href="{% url 'Note:review_later' id 3 %}" class="btn btn-primary btn-sm">+3m</a>
+        <a href="{% url 'Note:review_later' id 5 %}" class="btn btn-primary btn-sm">+5m</a>
+        <a href="{% url 'Note:review_later' id 10 %}" class="btn btn-primary btn-sm">+10m</a>
+        <a href="{% url 'Note:review_later' id 15 %}" class="btn btn-primary btn-sm">+15m</a>
+        <a href="{% url 'Note:review_later' id 30 %}" class="btn btn-primary btn-sm">+30m</a>
+        <a href="{% url 'Note:review_later' id 60 %}" class="btn btn-primary btn-sm">+1h</a>
+        <a href="{% url 'Note:review_later' id 240 %}" class="btn btn-primary btn-sm">+4h</a>
+        <a href="{% url 'Note:review_later' id 720 %}" class="btn btn-primary btn-sm">+12h</a>
       </p>
       <p class="text-center">
-        <a href="{% url 'Note:review_later' id -1 %}" class="btn btn-danger btn-sm">-1分</a>
-        <a href="{% url 'Note:review_later' id -3 %}" class="btn btn-danger btn-sm">-3分</a>
-        <a href="{% url 'Note:review_later' id -5 %}" class="btn btn-danger btn-sm">-5分</a>
-        <a href="{% url 'Note:review_later' id -10 %}" class="btn btn-danger btn-sm">-10分</a>
-        <a href="{% url 'Note:review_later' id -15 %}" class="btn btn-danger btn-sm">-15分</a>
-        <a href="{% url 'Note:review_later' id -30 %}" class="btn btn-danger btn-sm">-30分</a>
-        <a href="{% url 'Note:review_later' id -60 %}" class="btn btn-danger btn-sm">-1時間</a>
+        <a href="{% url 'Note:review_later' id -1 %}" class="btn btn-danger btn-sm">-1m</a>
+        <a href="{% url 'Note:review_later' id -3 %}" class="btn btn-danger btn-sm">-3m</a>
+        <a href="{% url 'Note:review_later' id -5 %}" class="btn btn-danger btn-sm">-5m</a>
+        <a href="{% url 'Note:review_later' id -10 %}" class="btn btn-danger btn-sm">-10m</a>
+        <a href="{% url 'Note:review_later' id -15 %}" class="btn btn-danger btn-sm">-15m</a>
+        <a href="{% url 'Note:review_later' id -30 %}" class="btn btn-danger btn-sm">-30m</a>
+        <a href="{% url 'Note:review_later' id -60 %}" class="btn btn-danger btn-sm">-1h</a>
+        <a href="{% url 'Note:review_later' id -240 %}" class="btn btn-danger btn-sm">-4h</a>
+        <a href="{% url 'Note:review_later' id -720 %}" class="btn btn-danger btn-sm">-12h</a>
       </p>
       <form class="" action="{% url 'Note:review_update' id %}" method="post">
         {% csrf_token %}
@@ -50,12 +79,12 @@
             保存名：{{ review_form.name }}
           </p>
           <p>
+            説明：{{ review_form.memo }}
+          </p>
+          <p>
             足：{{ review_form.rule }}
             通貨ペア：{{ review_form.pair }}
             表示本数：{{ review_form.delta }}
-          </p>
-          <p>
-            メモ：{{ review_form.memo }}
           </p>
           <button type="submit" class="btn btn-primary btn-sm">保存・反映</button>
           <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger btn-sm">削除</a>
@@ -66,7 +95,17 @@
       <form class="" action="{% url 'Note:speed_order' id %}" method="post">
         {% csrf_token %}
         <div class="text-center">
-          {{ position_speed_form.as_p }}
+          {# {{ position_speed_form.as_p }} #}
+          <p>
+            数量：{{ position_speed_form.quantity }}
+          </p>
+          <p>
+             指値：{{ position_speed_form.limit }}
+             逆指値：{{ position_speed_form.stop }}
+             {# 隠しフォーム #}
+             {{ position_speed_form.pair }}
+             {{ position_speed_form.position_datetime }}
+          </p>
           <button type="submit" class="btn btn-primary" name="button_type" value="sell">売り</button>
           <button type="submit" class="btn btn-danger" name="button_type" value="buy">買い</button>
         </div>
