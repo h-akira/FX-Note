@@ -20,8 +20,8 @@ class DiaryForm(forms.ModelForm):
 class ReviewForm(forms.ModelForm):
   class Meta:
     model = ReviewTable
-    # fields = ("name", "rule", "pair", "dt", "delta", "memo")
-    fields = ("name", "rule", "pair", "delta", "memo")
+    fields = ("name", "rule", "pair", "dt", "delta", "memo")
+    # fields = ("name", "rule", "pair", "delta", "memo")
     widgets = {
       'name': forms.Textarea(attrs={'rows': 1, 'cols': 50}),
       'memo': forms.Textarea(attrs={'rows': 3, 'cols': 50}),

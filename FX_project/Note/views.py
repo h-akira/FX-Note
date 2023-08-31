@@ -68,6 +68,8 @@ history_width = [
   100  # スワップ
 ]
 
+RATE_DIR = os.path.join(os.path.dirname(__file__), "../data/rate") 
+
 @login_required
 def history(request):
   histories_all = HistoryTable.objects.filter(user=request.user).order_by("-order_number","-order_datetime")
@@ -535,42 +537,62 @@ def review(request, id):
   forms = []
   for position in open_positions:
     if position.buy_sell == "buy":
-      settlement_bid_ask = "BID"
+      settlement_bid_ask = "BID"  # 決済のときだから逆
     elif position.buy_sell == "sell":
-      settlement_bid_ask = "ASK"
+      settlement_bid_ask = "ASK"  # 決済のときだから逆
     else:
       raise Exception
     rate = lib.chart.get_rate(
-      os.path.join(os.path.dirname(__file__),"../data/rate"),
+      dir_name = RATE_DIR,
       pair = position.pair,
       dt = dt,
       BID_ASK = settlement_bid_ask
     )
-    if position.pair[-3:] == "JPY":  # クロス円，1単位10000通貨
-      if position.buy_sell == "buy":
-        profit = round((rate - position.position_rate) * position.quantity * 10000)
-      elif position.buy_sell == "sell":
-        profit = -round((rate - position.position_rate) * position.quantity * 10000)
-      else:
-        raise Exception
-    else:  # それ以外，1単位1通貨
-      # クロス通貨で利益を計算
-      if position.buy_sell == "buy":
-        profit = (rate - position.position_rate) * position.quantity * 10000
-      elif position.buy_sell == "sell":
-        profit = -((rate - position.position_rate) * position.quantity) * 10000
-      else:
-        raise Exception
-      # 円にする
-      to_yen_pair = f"{position.pair[-3:]}/JPY"
-      to_yen_rate = lib.chart.get_rate(
-        os.path.join(os.path.dirname(__file__),"../data/rate"),
-        pair = to_yen_pair,
-        dt = dt,
-        BID_ASK = "BID"
-      )
-      print(to_yen_rate)
-      profit = round(profit * to_yen_rate)
+    profit = get_profit(
+      pair = position.pair, 
+      buy_sell = position.buy_sell, 
+      quantity = position.quantity, 
+      position_rate = position.position_rate, 
+      settlement_datetime = dt,
+      settlement_rate = rate
+    )
+    # if position.buy_sell == "buy":
+    #   settlement_bid_ask = "BID"
+    # elif position.buy_sell == "sell":
+    #   settlement_bid_ask = "ASK"
+    # else:
+    #   raise Exception
+    # rate = lib.chart.get_rate(
+    #   os.path.join(os.path.dirname(__file__),"../data/rate"),
+    #   pair = position.pair,
+    #   dt = dt,
+    #   BID_ASK = settlement_bid_ask
+    # )
+    # if position.pair[-3:] == "JPY":  # クロス円，1単位10000通貨
+    #   if position.buy_sell == "buy":
+    #     profit = round((rate - position.position_rate) * position.quantity * 10000)
+    #   elif position.buy_sell == "sell":
+    #     profit = -round((rate - position.position_rate) * position.quantity * 10000)
+    #   else:
+    #     raise Exception
+    # else:  # それ以外，1単位1通貨
+    #   # クロス通貨で利益を計算
+    #   if position.buy_sell == "buy":
+    #     profit = (rate - position.position_rate) * position.quantity * 10000
+    #   elif position.buy_sell == "sell":
+    #     profit = -((rate - position.position_rate) * position.quantity) * 10000
+    #   else:
+    #     raise Exception
+    #   # 円にする
+    #   to_yen_pair = f"{position.pair[-3:]}/JPY"
+    #   to_yen_rate = lib.chart.get_rate(
+    #     os.path.join(os.path.dirname(__file__),"../data/rate"),
+    #     pair = to_yen_pair,
+    #     dt = dt,
+    #     BID_ASK = "BID"
+    #   )
+    #   print(to_yen_rate)
+    #   profit = round(profit * to_yen_rate)
     evaluations.append(
       {
         "rate":rate,
@@ -669,8 +691,34 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None, BID_ASK="B
   # 共通部分
   plot_args = lib.chart_settings.plot_args.copy()
   # 横線
-  hlines=dict(hlines=[close],colors=["r"],linewidths=[0.1])
+  positions = PositionTable.objects.filter(review=_review)
+  open_positions = positions.filter(
+    Q(settlement_datetime__gt=_review.dt) | Q(settlement_datetime=None),
+  ).order_by("id")
+  # hlines=dict(hlines=[close],colors=["#ff7f50"],linewidths=[0.1], linestyle=["-"])
+  hlines=dict(hlines=[close],colors=["b"],linewidths=[0.1], linestyle=["-"])
+  # linewidthsを設定した状態で破線を同時に引けないようなのでaddplot
   plot_args["hlines"] = hlines
+  position_lines = []
+  for position in open_positions:
+    if _review.pair == position.pair:
+      if position.buy_sell == "buy":
+        position_lines.append(
+          mpf.make_addplot([position.position_rate]*len(df), panel=0, color='r', linestyle='--', linewidths=0.1)
+        )
+      elif position.buy_sell == "sell":
+        position_lines.append(
+          mpf.make_addplot([position.position_rate]*len(df), panel=0, color='b', linestyle='--', linewidths=0.1)
+        )
+      if position.limit:
+        position_lines.append(
+          mpf.make_addplot([position.limit]*len(df), panel=0, color='#ff00ff', linestyle='-', linewidths=0.1)
+        )
+      if position.stop:
+        position_lines.append(
+          mpf.make_addplot([position.stop]*len(df), panel=0, color='#ff00ff', linestyle='-', linewidths=0.1)
+        )
+  plot_args["addplot"] = position_lines
   # テクニカル指標を追加
   plot_args =  lib.chart_settings.add_technical_lines(plot_args, df)
   # 画像の大きさ
@@ -754,6 +802,24 @@ def speed_order(request, id):
         BID_ASK = BID_ASK
       )
       instance.position_rate = position_rate
+      # 指値，逆指値の処理
+      instance.condition, instance.settlement_datetime, instance.settlement_rate = limit_stop(
+        pair=instance.pair,
+        buy_sell = instance.buy_sell,
+        position_datetime = instance.position_datetime,
+        limit = instance.limit,
+        stop = instance.stop
+      )
+      # 利益の計算
+      if instance.settlement_datetime != None:
+        instance.profit = get_profit(
+          pair = instance.pair, 
+          buy_sell = instance.buy_sell, 
+          quantity = instance.quantity, 
+          position_rate = instance.position_rate, 
+          settlement_datetime = instance.settlement_datetime, 
+          settlement_rate = instance.settlement_rate
+        )
       instance.save()  # DBに保存
       return redirect("Note:review", id)
     else:
@@ -774,6 +840,24 @@ def position_update(request,id):
   if request.method == 'POST':
     form = PositionUpdateForm(request.POST, instance=_position)
     if form.is_valid():
+      # 指値，逆指値の処理
+      form.instance.condition, form.instance.settlement_datetime, form.instance.settlement_rate = limit_stop(
+        pair=_position.pair,
+        buy_sell = _position.buy_sell,
+        position_datetime = _position.position_datetime,
+        limit = form.instance.limit,
+        stop = form.instance.stop
+      )
+      # 利益の計算
+      if form.instance.settlement_datetime != None:
+        form.instance.profit = get_profit(
+          pair = _position.pair, 
+          buy_sell = _position.buy_sell, 
+          quantity = _position.quantity, 
+          position_rate = _position.position_rate, 
+          settlement_datetime = form.instance.settlement_datetime, 
+          settlement_rate = form.instance.settlement_rate
+        )
       form.save()
       return redirect("Note:review",_position.review.id)
   else:
@@ -783,6 +867,90 @@ def position_update(request,id):
       "position":_position
     }
     return render(request, 'Note/position_update.html', context)
+
+
+###############################################################
+# 以下は内部処理用
+###############################################################
+def limit_stop(pair, buy_sell, position_datetime, limit=None, stop=None, deadline=14, dir_name=RATE_DIR):
+  # deadlineは有効期限で単位は日
+  if limit == None and stop== None:
+    return None, None, None
+  df = lib.chart.GMO_dir2DataFrame(
+    dir_name = dir_name, 
+    pair=pair,
+    date_range=[
+      (position_datetime-datetime.timedelta(hours=6)).date(),
+      (position_datetime+datetime.timedelta(days=deadline+1)).date()
+    ]
+  ) 
+  df = df[df.index > position_datetime.astimezone(timezone('Asia/Tokyo'))]
+  if stop:
+    if buy_sell == "buy":
+      stop_datetime = df[df['Low'] <= stop].index.min()
+    elif buy_sell == "sell":
+      stop_datetime = df[df['High'] >= stop].index.min()
+    else:
+      raise Exception
+  if limit:
+    if buy_sell == "buy":
+      limit_datetime = df[df['Low'] >= limit].index.min()
+    elif buy_sell == "sell":
+      limit_datetime = df[df['High'] <= limit].index.min()
+    else:
+      raise Exception
+  if (limit == None or pd.isna(limit_datetime)) and (stop == None or pd.isna(stop_datetime)):
+    return None, None, None
+  elif limit == None or pd.isna(limit_datetime):
+    return "stop", stop_datetime, stop
+  elif stop == None or pd.isna(stop_datetime):
+    return "limit", limit_datetime, limit
+  elif limit_datetime < stop_datetime:
+    return "limit", limit_datetime, limit
+  else:
+    # 損切り優先
+    return "stop", stop_datetime, stop
+  
+def get_profit(pair, buy_sell, quantity, position_rate, settlement_datetime, settlement_rate=None, dir_name=RATE_DIR):
+  # buy_sellは新規のときの売買
+  if buy_sell == "buy":
+    settlement_bid_ask = "BID"
+  elif buy_sell == "sell":
+    settlement_bid_ask = "ASK"
+  else:
+    raise Exception
+  if settlement_rate == None:  # 未使用
+    settlement_rate = lib.chart.get_rate(
+      dir_name = dir_name, 
+      pair = pair,
+      dt = settlement_datetime,
+      BID_ASK = settlement_bid_ask
+    )
+  if pair[-3:] == "JPY":  # クロス円，1単位10000通貨
+    if buy_sell == "buy":
+      profit = round((settlement_rate - position_rate) * quantity * 10000)
+    elif position.buy_sell == "sell":
+      profit = -round((settlement_rate - position_rate) * quantity * 10000)
+    else:
+      raise Exception
+  else:  # それ以外，1単位1通貨
+    # クロス通貨で利益を計算
+    if position.buy_sell == "buy":
+      profit = (settlement_rate - position_rate) * quantity * 10000
+    elif position.buy_sell == "sell":
+      profit = -((settlement_rate - position_rate) * quantity) * 10000
+    else:
+      raise Exception
+    # 円にする
+    to_yen_pair = f"{position.pair[-3:]}/JPY"
+    to_yen_rate = lib.chart.get_rate(
+      dir_name = dir_name, 
+      pair = to_yen_pair,
+      dt = dt,
+      BID_ASK = "BID"
+    )
+    profit = round(profit * to_yen_rate)
+  return profit
 
 
 
