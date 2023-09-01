@@ -627,7 +627,8 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None, BID_ASK="B
       ],
       BID_ASK = bid_ask
     )
-    _df = _df[_df.index <= _review.dt.astimezone(timezone('Asia/Tokyo'))]
+    ## 00秒時点なので，1分前のCloseまで
+    _df = _df[_df.index <= _review.dt.astimezone(timezone('Asia/Tokyo')) - datetime.timedelta(minutes=1)]
     if bid_ask == "BID":
       df_BID = _df.copy()
       if BID_ASK == "BID":
@@ -636,11 +637,11 @@ def chart_image_review(request, id, _HttpResponse=True, _review=None, BID_ASK="B
       df_ASK = _df.copy()
       if BID_ASK == "ASK":
         df = _df.copy()
-  # 終値
+  # 始値（00秒の時点を返す）
   close_bid = df_BID["Close"].iloc[-1]
   close_bid_before = df_BID["Close"].iloc[-2]
-  close_ask = df_ASK["Close"].iloc[-1]
-  close_ask_before = df_ASK["Close"].iloc[-2]
+  close_ask = df_ASK["Open"].iloc[-1]
+  close_ask_before = df_ASK["Open"].iloc[-2]
   if BID_ASK == "BID":
     increase_rate = close_bid - close_bid_before
     close = close_bid
@@ -866,7 +867,11 @@ def limit_stop(pair, buy_sell, position_datetime, limit=None, stop=None, deadlin
       (position_datetime+datetime.timedelta(days=deadline+1)).date()
     ]
   ) 
-  df = df[df.index > position_datetime.astimezone(timezone('Asia/Tokyo'))]
+  # 01秒から60秒の範囲を調べた上で決済は60秒，すなわち1分後なので最後にshift
+  df = df[df.index > position_datetime.astimezone(timezone('Asia/Tokyo')) - datetime.timedelta(minutes=1)]
+  df = df.shift(1)
+  print(df)
+  df.dropna(inplace=True)
   if stop:
     if buy_sell == "buy":
       stop_datetime = df[df['Low'] <= stop].index.min()
@@ -876,9 +881,9 @@ def limit_stop(pair, buy_sell, position_datetime, limit=None, stop=None, deadlin
       raise Exception
   if limit:
     if buy_sell == "buy":
-      limit_datetime = df[df['Low'] >= limit].index.min()
+      limit_datetime = df[df['High'] >= limit].index.min()
     elif buy_sell == "sell":
-      limit_datetime = df[df['High'] <= limit].index.min()
+      limit_datetime = df[df['Low'] <= limit].index.min()
     else:
       raise Exception
   if (limit == None or pd.isna(limit_datetime)) and (stop == None or pd.isna(stop_datetime)):
@@ -933,6 +938,5 @@ def get_profit(pair, buy_sell, quantity, position_rate, settlement_datetime, set
     )
     profit = round(profit * to_yen_rate)
   return profit
-
 
 
