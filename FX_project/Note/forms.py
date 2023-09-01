@@ -21,7 +21,6 @@ class ReviewForm(forms.ModelForm):
   class Meta:
     model = ReviewTable
     fields = ("name", "rule", "pair", "dt", "delta", "memo")
-    # fields = ("name", "rule", "pair", "delta", "memo")
     widgets = {
       'name': forms.Textarea(attrs={'rows': 1, 'cols': 50}),
       'memo': forms.Textarea(attrs={'rows': 3, 'cols': 50}),
@@ -31,7 +30,6 @@ class ReviewForm(forms.ModelForm):
 class ReviewUpdateForm(forms.ModelForm):
   class Meta:
     model = ReviewTable
-    # fields = ("name", "rule", "pair", "dt", "delta", "memo")
     fields = ("name", "rule", "pair", "delta", "memo")
     widgets = {
       'name': forms.Textarea(attrs={'rows': 1, 'cols': 50}),
@@ -39,13 +37,14 @@ class ReviewUpdateForm(forms.ModelForm):
     }
 
 class PositionSpeedForm(forms.ModelForm):
-  now_datetime = forms.DateTimeField(widget=forms.HiddenInput())
   class Meta:
     model = PositionTable
     fields = ("quantity", "limit", "stop", "pair", "position_datetime")
     widgets = {
       'pair': forms.HiddenInput(),
-      'position_datetime': forms.HiddenInput()
+      'position_datetime': forms.HiddenInput(),
+      "limit": forms.NumberInput(attrs={"step":"0.001"}),
+      "stop": forms.NumberInput(attrs={"step":"0.001"})
     }
     
 class PositionMarketForm(forms.ModelForm):
@@ -62,8 +61,13 @@ class PositionMarketForm(forms.ModelForm):
 
 class PositionUpdateForm(forms.ModelForm):
   now_datetime = forms.DateTimeField(widget=forms.HiddenInput())
+  now_rate = forms.FloatField(widget=forms.HiddenInput())
   class Meta:
     model = PositionTable
     fields = ("limit", "stop")
+    widgets = {
+      "limit": forms.NumberInput(attrs={"style":"width:100px", "step":"0.001"}),
+      "stop": forms.NumberInput(attrs={"style":"width:100px", "step":"0.001"})
+    }
 
 

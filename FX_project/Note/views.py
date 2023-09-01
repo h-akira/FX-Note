@@ -523,7 +523,7 @@ def review(request, id):
   dt = _review.dt.astimezone(timezone("Asia/Tokyo"))
   position_speed_form = PositionSpeedForm(
     initial = {
-      "position_datetime" : _review.dt,
+      "position_datetime" :dt,
       "pair" : _review.pair
     }
   )
@@ -590,7 +590,6 @@ def review(request, id):
         "stop_profit":stop_profit
       }
     )
-    print(stop_profit)
     market_forms.append(
       PositionMarketForm(
         initial={
@@ -605,7 +604,8 @@ def review(request, id):
       PositionUpdateForm(
         instance=position,
         initial={
-          "now_datetime":dt
+          "now_datetime":dt,
+          "now_rate":rate
         }
       )
     )
@@ -826,9 +826,10 @@ def speed_order(request, id):
       instance.condition, instance.settlement_datetime, instance.settlement_rate = limit_stop(
         pair=instance.pair,
         buy_sell = instance.buy_sell,
-        now_datetime = instance.now_datetime,
+        now_datetime = instance.position_datetime,
         limit = instance.limit,
-        stop = instance.stop
+        stop = instance.stop,
+        now_rate = instance.position_rate
       )
       # 利益の計算
       if instance.settlement_datetime != None:
@@ -866,7 +867,8 @@ def position_update(request,id):
         buy_sell = _position.buy_sell,
         now_datetime = form.cleaned_data.get('now_datetime', None),  # Noneはたぶんいらない
         limit = form.instance.limit,
-        stop = form.instance.stop
+        stop = form.instance.stop,
+        now_rate = form.cleaned_data.get('now_rate', None),  # Noneはたぶんいらない
       )
       # 利益の計算
       if form.instance.settlement_datetime != None:
@@ -893,10 +895,24 @@ def position_update(request,id):
 ###############################################################
 # 以下は内部処理用
 ###############################################################
-def limit_stop(pair, buy_sell, now_datetime, limit=None, stop=None, deadline=14, dir_name=RATE_DIR):
+def limit_stop(pair, buy_sell, now_datetime, limit=None, stop=None, deadline=14, dir_name=RATE_DIR, now_rate=None):
   # deadlineは有効期限で単位は日
+  # now_rateは指値，逆指値の値の範囲に問題がないか確認するために用いる
   if limit == None and stop== None:
     return None, None, None
+  # 値に問題ないか確認
+  if now_rate != None:
+    if limit != None:
+      if buy_sell == "buy" and now_rate >= limit:
+        raise ValueError
+      elif buy_sell == "sell" and now_rate <= limit:
+        raise ValueError
+    if stop != None:
+      if buy_sell == "buy" and now_rate <= stop:
+        raise ValueError
+      elif buy_sell == "sell" and now_rate >= stop:
+        raise ValueError
+  # データ取得
   df = lib.chart.GMO_dir2DataFrame(
     dir_name = dir_name, 
     pair=pair,
@@ -908,7 +924,6 @@ def limit_stop(pair, buy_sell, now_datetime, limit=None, stop=None, deadline=14,
   # 01秒から60秒の範囲を調べた上で決済は60秒，すなわち1分後なので最後にshift
   df = df[df.index > now_datetime.astimezone(timezone('Asia/Tokyo')) - datetime.timedelta(minutes=1)]
   df = df.shift(1)
-  print(df)
   df.dropna(inplace=True)
   if stop:
     if buy_sell == "buy":

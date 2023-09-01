@@ -94,23 +94,20 @@
       <h1 class="text-center">注文</h1>
       <form class="" action="{% url 'Note:speed_order' id %}" method="post">
         {% csrf_token %}
-        {{ position_speed_form.now_datetime }}
+        {# 隠しフォーム #}
+        {{ position_speed_form.pair }}
+        {{ position_speed_form.position_datetime }}
         <div class="text-center">
-          {# {{ position_speed_form.as_p }} #}
           <p>
             数量：{{ position_speed_form.quantity }}
           </p>
           <p>
              指値：{{ position_speed_form.limit }}
              逆指値：{{ position_speed_form.stop }}
-             {# 隠しフォーム #}
-             {{ position_speed_form.pair }}
-             {{ position_speed_form.position_datetime }}
           </p>
           <button type="submit" class="btn btn-primary" name="button_type" value="sell">売り</button>
           <button type="submit" class="btn btn-danger" name="button_type" value="buy">買い</button>
         </div>
-        {# <button type="submit" class="btn btn-primary btn-sm">保存・反映</button> #}
       </form>
     </div>
   </div>
@@ -198,6 +195,7 @@
               <form class="" action="{% url 'Note:position_update' position.id %}" method="post">
                 {% csrf_token %}
                 {{ position_update_form.now_datetime }}
+                {{ position_update_form.now_rate }}
                 <td>
                   {# {{ position.limit|default_if_none:'' }} #}
                   {{ position_update_form.limit }}
