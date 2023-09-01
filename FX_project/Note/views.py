@@ -535,7 +535,8 @@ def review(request, id):
     settlement_datetime__lte=_review.dt
   ).order_by("-settlement_datetime")
   evaluations = []
-  forms = []
+  market_forms = []
+  position_update_forms = []
   for position in open_positions:
     if position.buy_sell == "buy":
       settlement_bid_ask = "BID"  # 決済のときだから逆
@@ -557,18 +558,54 @@ def review(request, id):
       settlement_datetime = dt,
       settlement_rate = rate
     )
+    if position.limit != None:
+      limit_profit = get_profit(
+        pair = position.pair, 
+        buy_sell = position.buy_sell, 
+        quantity = position.quantity, 
+        position_rate = position.position_rate, 
+        settlement_datetime = dt,
+        settlement_rate = position.limit
+      )
+    else:
+      limit_profit = None
+    # 指値，逆指値の損益を計算する
+    # クロス円ではない場合は決済日時ではなく現在日時で円に換算するのでここ
+    if position.stop != None:
+      stop_profit = get_profit(
+        pair = position.pair, 
+        buy_sell = position.buy_sell, 
+        quantity = position.quantity, 
+        position_rate = position.position_rate, 
+        settlement_datetime = dt,
+        settlement_rate = position.stop
+      )
+    else:
+      stop_profit = None
     evaluations.append(
       {
         "rate":rate,
-        "profit":profit
+        "profit":profit,
+        "limit_profit":limit_profit,
+        "stop_profit":stop_profit
       }
     )
-    forms.append(
+    print(stop_profit)
+    market_forms.append(
       PositionMarketForm(
         initial={
           "settlement_datetime":dt,
           "settlement_rate":rate,
           "profit":profit
+        }
+      )
+    )
+  # 指値・逆指値の更新用
+    position_update_forms.append(
+      PositionUpdateForm(
+        instance=position,
+        initial={
+          "now_datetime":dt
         }
       )
     )
@@ -589,7 +626,7 @@ def review(request, id):
     "increase_rate" : increase_rate,
     "review_form":review_form,
     "position_speed_form":position_speed_form,
-    "open_positions_zip":zip(open_positions, evaluations, forms),
+    "open_positions_zip":zip(open_positions, evaluations, market_forms, position_update_forms),
     "close_positions":close_positions,
     "evaluations":evaluations,
     "evaluation_profit_all": evaluation_profit_all,
@@ -789,7 +826,7 @@ def speed_order(request, id):
       instance.condition, instance.settlement_datetime, instance.settlement_rate = limit_stop(
         pair=instance.pair,
         buy_sell = instance.buy_sell,
-        position_datetime = instance.position_datetime,
+        now_datetime = instance.now_datetime,
         limit = instance.limit,
         stop = instance.stop
       )
@@ -827,7 +864,7 @@ def position_update(request,id):
       form.instance.condition, form.instance.settlement_datetime, form.instance.settlement_rate = limit_stop(
         pair=_position.pair,
         buy_sell = _position.buy_sell,
-        position_datetime = _position.position_datetime,
+        now_datetime = form.cleaned_data.get('now_datetime', None),  # Noneはたぶんいらない
         limit = form.instance.limit,
         stop = form.instance.stop
       )
@@ -843,19 +880,20 @@ def position_update(request,id):
         )
       form.save()
       return redirect("Note:review",_position.review.id)
-  else:
-    form = PositionUpdateForm(instance=_position)
-    context = {
-      "form":form,
-      "position":_position
-    }
-    return render(request, 'Note/position_update.html', context)
+  # 廃止
+  # else:
+  #   form = PositionUpdateForm(instance=_position)
+  #   context = {
+  #     "form":form,
+  #     "position":_position
+  #   }
+  #   return render(request, 'Note/position_update.html', context)
 
 
 ###############################################################
 # 以下は内部処理用
 ###############################################################
-def limit_stop(pair, buy_sell, position_datetime, limit=None, stop=None, deadline=14, dir_name=RATE_DIR):
+def limit_stop(pair, buy_sell, now_datetime, limit=None, stop=None, deadline=14, dir_name=RATE_DIR):
   # deadlineは有効期限で単位は日
   if limit == None and stop== None:
     return None, None, None
@@ -863,12 +901,12 @@ def limit_stop(pair, buy_sell, position_datetime, limit=None, stop=None, deadlin
     dir_name = dir_name, 
     pair=pair,
     date_range=[
-      (position_datetime-datetime.timedelta(hours=6)).date(),
-      (position_datetime+datetime.timedelta(days=deadline+1)).date()
+      (now_datetime-datetime.timedelta(hours=6)).date(),
+      (now_datetime+datetime.timedelta(days=deadline+1)).date()
     ]
   ) 
   # 01秒から60秒の範囲を調べた上で決済は60秒，すなわち1分後なので最後にshift
-  df = df[df.index > position_datetime.astimezone(timezone('Asia/Tokyo')) - datetime.timedelta(minutes=1)]
+  df = df[df.index > now_datetime.astimezone(timezone('Asia/Tokyo')) - datetime.timedelta(minutes=1)]
   df = df.shift(1)
   print(df)
   df.dropna(inplace=True)
@@ -899,6 +937,7 @@ def limit_stop(pair, buy_sell, position_datetime, limit=None, stop=None, deadlin
     return "stop", stop_datetime, stop
   
 def get_profit(pair, buy_sell, quantity, position_rate, settlement_datetime, settlement_rate=None, dir_name=RATE_DIR):
+  # settlement_datetimeはsettlement_rateが指定されている場合にはクロス円以外の場合の円への換算のみに使用
   # buy_sellは新規のときの売買
   if buy_sell == "buy":
     settlement_bid_ask = "BID"

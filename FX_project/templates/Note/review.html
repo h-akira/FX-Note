@@ -94,6 +94,7 @@
       <h1 class="text-center">注文</h1>
       <form class="" action="{% url 'Note:speed_order' id %}" method="post">
         {% csrf_token %}
+        {{ position_speed_form.now_datetime }}
         <div class="text-center">
           {# {{ position_speed_form.as_p }} #}
           <p>
@@ -147,11 +148,11 @@
               <th scope="col" style="width:100px;">
                 逆指値
               </th>
-              <th scope="col" style="width:100px;">
+              <th colspan="2" scope="col" style="width:100px;">
                 操作
               </th>
             </tr>
-            {% for position, evaluation, form in open_positions_zip %}
+            {% for position, evaluation, market_form, position_update_form in open_positions_zip %}
             <tr class="text-center table-success border-dark">
               <td>
                 {{ position.pair }}
@@ -194,18 +195,45 @@
                 {{ evaluation.profit|intcomma }}
                 {% endif %}
               </td>
-              <td>
-                {{ position.limit|default_if_none:'' }}
-              </td>
-              <td>
-                {{ position.stop|default_if_none:'' }}
-              </td>
+              <form class="" action="{% url 'Note:position_update' position.id %}" method="post">
+                {% csrf_token %}
+                {{ position_update_form.now_datetime }}
+                <td>
+                  {# {{ position.limit|default_if_none:'' }} #}
+                  {{ position_update_form.limit }}
+                  {% if position.limit != None %}
+                  <br>
+                  (
+                  {% if evaluation.limit_profit > 0 %}
+                  +
+                  {% endif %}
+                  {{ evaluation.limit_profit|default_if_none:'' }}
+                  )
+                  {% endif %}
+                </td>
+                <td>
+                  {# {{ position.stop|default_if_none:'' }} #}
+                  {{ position_update_form.stop }}
+                  {% if position.stop != None %}
+                  <br>
+                  (
+                  {% if evaluation.stop_profit > 0 %}
+                  +
+                  {% endif %}
+                  {{ evaluation.stop_profit|default_if_none:'' }}
+                  )
+                  {% endif %}
+                </td>
+                <td>
+                  <button type="submit" class="btn btn-primary btn-sm">更新</button>
+                </td>
+              </form>
               <td>
                 <form class="" action="{% url 'Note:market_settlement' position.id %}" method="post">
                   {% csrf_token %}
-                  {{ form.as_p }}
+                  {{ market_form.as_p }}
                   <button type="submit" class="btn btn-primary btn-sm">成行</button>
-                  <a href="{% url 'Note:position_update' position.id %}" class="btn btn-danger btn-sm">変更</a>
+                  {# <a href="{% url 'Note:position_update' position.id %}" class="btn btn-danger btn-sm">変更</a> #}
                 </form>
               </td>
             </tr>

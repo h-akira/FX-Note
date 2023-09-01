@@ -39,6 +39,7 @@ class ReviewUpdateForm(forms.ModelForm):
     }
 
 class PositionSpeedForm(forms.ModelForm):
+  now_datetime = forms.DateTimeField(widget=forms.HiddenInput())
   class Meta:
     model = PositionTable
     fields = ("quantity", "limit", "stop", "pair", "position_datetime")
@@ -60,6 +61,7 @@ class PositionMarketForm(forms.ModelForm):
       self.fields[field_name].widget = forms.HiddenInput()
 
 class PositionUpdateForm(forms.ModelForm):
+  now_datetime = forms.DateTimeField(widget=forms.HiddenInput())
   class Meta:
     model = PositionTable
     fields = ("limit", "stop")
