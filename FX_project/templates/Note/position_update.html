@@ -6,6 +6,6 @@
   {% csrf_token %}
   {{ form.as_p }}
   <a href="{% url 'Note:review' position.review.id %}" class="btn btn-primary btn-sm">戻る</a>
-  <button type="submit" class="btn btn-primary btn-sm">更新</button>
+  <button type="submit" class="btn btn-danger btn-sm">更新</button>
 </form>
 {% endblock content %}
