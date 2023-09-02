@@ -36,6 +36,7 @@
         {% else %}
        {{ evaluation_profit_all|intcomma }}
        {% endif %}
+       円
       </h5>
       <h5 class="text-center">
         決済損益：
@@ -48,6 +49,7 @@
         {% else %}
        {{ settlement_profit_all|intcomma }}
        {% endif %}
+       円
       </h5>
       <p class="text-center">
         <a href="{% url 'Note:review_later' id 1 %}" class="btn btn-primary btn-sm">+1m</a>
@@ -86,8 +88,8 @@
             通貨ペア：{{ review_form.pair }}
             表示本数：{{ review_form.delta }}
           </p>
-          <button type="submit" class="btn btn-primary btn-sm">保存・反映</button>
-          <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger btn-sm">削除</a>
+          <button type="submit" class="btn btn-primary">更新</button>
+          <a href="{% url 'Note:review_delete' id %}" class="btn btn-danger">削除</a>
         </div>
       </form>
       <br>
@@ -205,7 +207,7 @@
                   {% if evaluation.limit_profit > 0 %}
                   +
                   {% endif %}
-                  {{ evaluation.limit_profit|default_if_none:'' }}
+                  {{ evaluation.limit_profit|default_if_none:''|intcomma }}
                   )
                   {% endif %}
                 </td>
@@ -218,7 +220,7 @@
                   {% if evaluation.stop_profit > 0 %}
                   +
                   {% endif %}
-                  {{ evaluation.stop_profit|default_if_none:'' }}
+                  {{ evaluation.stop_profit|default_if_none:''|intcomma }}
                   )
                   {% endif %}
                 </td>
@@ -230,7 +232,7 @@
                 <form class="" action="{% url 'Note:market_settlement' position.id %}" method="post">
                   {% csrf_token %}
                   {{ market_form.as_p }}
-                  <button type="submit" class="btn btn-primary btn-sm">成行</button>
+                  <button type="submit" class="btn btn-danger btn-sm">成行</button>
                   {# <a href="{% url 'Note:position_update' position.id %}" class="btn btn-danger btn-sm">変更</a> #}
                 </form>
               </td>

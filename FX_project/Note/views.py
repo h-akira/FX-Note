@@ -612,6 +612,8 @@ def review(request, id):
   # open_positions = list(open_positions.values())
   evaluation_profit_all = sum([e["profit"] for e in evaluations])
   settlement_profit_all = close_positions.aggregate(Sum("profit"))["profit__sum"]
+  if settlement_profit_all == None:
+    settlement_profit_all = 0
   context = {
     "review":_review,
     "year":dt.year, 

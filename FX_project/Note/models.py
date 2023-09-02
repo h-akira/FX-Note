@@ -81,11 +81,18 @@ class DiaryTable(models.Model):
       )
     ]
 
+
+def default_review_name():
+    last_review = ReviewTable.objects.last()
+    next_id = last_review.id + 1 if last_review else 1
+    return f"レビュー（{next_id}）"
+
 class ReviewTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
-  name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
-  pair = models.CharField(max_length=10, choices=PAIR)
-  rule = models.CharField(max_length=10, choices=RULE)
+  # name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+  name = models.CharField(max_length=255, default=default_review_name)
+  pair = models.CharField(default="USD/JPY", max_length=10, choices=PAIR)
+  rule = models.CharField(default="15T", max_length=10, choices=RULE)
   delta = models.IntegerField(default=150)
   dt = models.DateTimeField()
   memo = models.CharField(max_length=511,null=True, blank=True)

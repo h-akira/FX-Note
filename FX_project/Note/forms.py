@@ -34,6 +34,7 @@ class ReviewUpdateForm(forms.ModelForm):
     widgets = {
       'name': forms.Textarea(attrs={'rows': 1, 'cols': 50}),
       'memo': forms.Textarea(attrs={'rows': 3, 'cols': 50}),
+      "delta": forms.NumberInput(attrs={"style":"width:60px"})
     }
 
 class PositionSpeedForm(forms.ModelForm):
