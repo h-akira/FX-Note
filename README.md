@@ -8,6 +8,7 @@ pip3 install pandas
 pip3 install numpy
 pip3 install mplfinance
 pip3 install selenium
+pip3 install bs4
 ```
 Setting selenium:
 ```
