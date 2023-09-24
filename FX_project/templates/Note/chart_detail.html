@@ -1,59 +1,49 @@
 {% extends 'base.html' %}
-{% block title %}取引履歴{% endblock title %}
+{% block title %}チャート{% endblock title %}
 {% block content %}
-<div class="table-responsive">
-  <table class="table table-bordered border-dark text-nowrap" style="table-layout:fixed;">
-    <tbody>
-      <tr class="table-warning text-center">
-        <th scope="col" style="width: 200px;">
-          登録名 
-        </th>
-        <th scope="col" style="width: 100px;">
-          通貨ペア
-        </th>
-        <th scope="col" style="width: 100px;">
-          足
-        </th>
-        <th scope="col" style="width: 500px;">
-          メモ
-        </th>
-        <th scope="col" style="width: 100px;">
-          操作
-        </th>
-      </tr>
-      <tr class="text-center">
-        <td class="text-wrap">
-          {{ chart.name }}
-        </td>
-        <td>
-          {{ chart.pair }}
-        </td>
-        <td>
-          {{ chart.rule }}
-        </td>
-        <td class="text-wrap">
-          {% if chart.memo != None %}
-          {{ chart.memo }}
-          {% endif %}
-        </td>
-        <td>
-          <a class="btn btn-primary btn-sm" href='{% url "Note:chart_edit" id %}'>編集</a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
- </div>
-<div class="col" style="overflow-x: auto;">
-  <a href="{% url "Note:chart_image" id %}">
-    <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
-  </a>
-  {# <img src="{% url "Note:chart_image" id %}" alt="Chart"> #}
+<div class="container-fluid custom-container">
+  <div class="row">
+    <div class="col-9">
+      <h3 class="text-center">{{ chart.pair }} {{ chart.get_rule_display }}</h3>
+      <div class="col" style="overflow-x: auto;">
+        <a href="{% url "Note:chart_image" id %}">
+           <img src="data:image/png;base64,{{ image_data  }}" alt="Chart">
+        </a>
+      </div>
+    </div>
+    <div class="col">
+      <form class="" action="{% url 'Note:chart_update' id %}" method="post">
+        {% csrf_token %}
+        {# {{ form.as_p }} #}
+        <p>
+          保存名：{{ form.name }}
+        </p>
+        <p>
+          基準時刻：{{ form.standard_datetime }}
+        </p>
+        <p>
+          足：{{ form.rule }}
+        </p>
+        <p>
+          通貨ペア：{{ form.pair }}
+        </p>
+        <p>
+          正方向表示本数：{{ form.plus_delta }}
+        </p>
+        <p>
+          負方向表示本数：{{ form.minus_delta }}
+        </p>
+        <p>
+          説明：
+        </p>
+          {{ form.memo }}
+        <p>
+          <button type="submit" class="btn btn-primary btn-sm">更新</button>
+          <a href="{% url 'Note:chart_delete' id %}" class="btn btn-danger btn-sm">削除</a>
+        </p>
+      </form>
+    </div>
+  </div>
 </div>
 {% include 'Note/history_table_jp.html' %}
-{# <form class="" action="{% url 'Note:chart_update' id %}" method="post"> #}
-{#   {% csrf_token %} #}
-{#   {{ form.as_p }} #}
-{#   {% include 'Note/history_table_jp.html' %} #}
-{#   <button type="submit" class="btn btn-primary btn-sm">登録</button> #}
-{# </form> #}
 {% endblock content %}

@@ -1,27 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}取引履歴{% endblock title %}
+{% block title %}新規作成{% endblock title %}
 {% block content %}
-<h1>編集</h1>
-{# <form class="" action="{% url 'Note:chart_generate' %}" method="post" enctype="multipart/form-data"> #}
-{% if type == "add" %}
+<h1>新規作成</h1>
 <form class="" action="{% url 'Note:chart_add' %}" method="post">
-{% elif type == "update" %}
-<form class="" action="{% url 'Note:chart_update' id %}" method="post">
-{% else %}
-<form class="" action="{% url 'Note:chart_add' %}" method="post">
-{% endif %}
   {% csrf_token %}
   {{ form.as_p }}
   {% if table %}
   {% include 'Note/history_table_jp.html' %}
   {% endif %}
-  {% if type == "add" %}
   <button type="submit" class="btn btn-primary btn-sm">登録</button>
-  {% elif type == "update" %}
-  <button type="submit" class="btn btn-primary btn-sm">更新</button>
-  <a href="{% url 'Note:chart_delete' id %}" class="btn btn-primary btn-sm">削除</a>
-  {% else %}
-  <button type="submit" class="btn btn-primary btn-sm">登録</button>
-  {% endif %}
 </form>
 {% endblock content %}

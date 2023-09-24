@@ -7,7 +7,11 @@ class ChartForm(forms.ModelForm):
     # fields = ("user", 'name', 'pair', 'rule',"standard_datetime", "minus_delta", "plus_delta", "memo")
     fields = ('name', 'pair', 'rule',"standard_datetime", "minus_delta", "plus_delta", "memo")
     widgets = {
-      'memo': forms.Textarea(attrs={'rows': 10, 'cols': 50}),
+      'memo': forms.Textarea(
+        attrs={
+          'style': 'width: 100%; height: auto;'
+        }
+      ),
       'standard_datetime': forms.DateTimeInput(attrs={"type": "datetime-local"})
     }
 class DiaryForm(forms.ModelForm):
