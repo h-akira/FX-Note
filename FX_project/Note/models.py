@@ -55,15 +55,21 @@ class HistoryTable(models.Model):
       )
     ]
   
+def default_chart_name():
+    last_review = ReviewTable.objects.last()
+    next_id = last_review.id + 1 if last_review else 1
+    return f"チャート（{next_id}）"
+
 class ChartTable(models.Model):
   user = models.ForeignKey(User,on_delete=models.CASCADE)
-  name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+  # name = models.CharField(max_length=255, default=timezone.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+  name = models.CharField(max_length=255, default=default_chart_name)
   pair = models.CharField(max_length=10, choices=PAIR)
   rule = models.CharField(max_length=10, choices=RULE)
   standard_datetime = models.DateTimeField()
   minus_delta = models.IntegerField(default=100)
   plus_delta = models.IntegerField(default=100)
-  memo = models.CharField(max_length=511,null=True, blank=True)
+  memo = models.TextField(null=True, blank=True)
 
 class HistoryLinkTable(models.Model):
   chart = models.ForeignKey(ChartTable, on_delete=models.CASCADE)

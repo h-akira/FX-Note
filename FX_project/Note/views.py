@@ -157,7 +157,9 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
   for history in histories:
     if history.order_rate != None:
       hlines["hlines"].append(history.order_rate)
-      if history.buy_sell == "buy":
+      if history.state == "canceled":
+        hlines["colors"].append("#7d7d7d")
+      elif history.buy_sell == "buy":
         hlines["colors"].append("r")
       else:
         hlines["colors"].append("b")
@@ -185,7 +187,7 @@ def chart_image(request,id, _HttpResponse=True, _chart=None, histories=None):
       vlines["linewidths"].append(0.1)
   plot_args["vlines"] = vlines
   # 画像の大きさ
-  plot_args["figsize"] = (19,8)
+  plot_args["figsize"] = (14,8)
   # plot_args["figratio"] = (10,6)
   # 画像の出力先
   buf = io.BytesIO()
@@ -256,6 +258,7 @@ def chart_image_day(request, pair, year, month, day, _HttpResponse=True):
 def chart_detail(request, id):
   # 該当のchartのデータを取得
   _chart = get_object_or_404(ChartTable, pk=id)
+  form = ChartForm(instance=_chart)
   # 該当のチャートと紐付けられている取引履歴を取得
   histories = [i.history for i in HistoryLinkTable.objects.filter(chart=_chart)]
   histories = sorted(histories, reverse=True, key=lambda x: x.id)
@@ -267,6 +270,7 @@ def chart_detail(request, id):
     "chart":_chart,
     "histories":histories, 
     "image_data":image_data,
+    "form":form,
     "header":history_header, 
     "width":history_width,
     "box":False, 
@@ -305,7 +309,6 @@ def histories2edit(request):
     "table":True,
     "box":True, 
     "checked":True,
-    "type":"add"
   }
   return render(request, 'Note/edit.html', context)
 
@@ -319,21 +322,6 @@ def none2edit(request):
   context = {
     "form":form,
     "table":False,
-    "type":"add"
-  }
-  return render(request, 'Note/edit.html', context)
-
-@login_required
-def chart_edit(request, id):
-  _chart = get_object_or_404(ChartTable, pk=id)
-  form = ChartForm(instance=_chart)
-  context = {
-    "id":id,
-    "form":form,
-    "table":False,
-    "box":False, 
-    "checked":False,
-    "type":"update"
   }
   return render(request, 'Note/edit.html', context)
 
@@ -342,7 +330,6 @@ def chart_add(request):
   form = ChartForm(request.POST)
   histories = HistoryTable.objects.filter(id__in=request.POST.getlist("register"))
   if form.is_valid():
-    # latest_chart = form.save()
     instance = form.save(commit=False)  # まだDBには保存しない
     instance.user = request.user  # ログインしているユーザー情報をセット
     instance.save()  # DBに保存
@@ -350,8 +337,7 @@ def chart_add(request):
       for history in histories:
         obj = HistoryLinkTable(chart=instance, history=history)
         obj.save()
-    return chart_detail(request, instance.id)
-    # return redirect("Note:chart")
+    return redirect("Note:chart_detail", instance.id)
   else:
     print("not valid")
     return redirect("Note:history")
@@ -362,9 +348,9 @@ def chart_update(request,id):
   form = ChartForm(request.POST, instance=_chart)
   if form.is_valid():
     form.save()
-    return chart_detail(request, id) 
+    return redirect("Note:chart_detail",id)
   else:
-    return redirect("Note:chart",id)
+    return redirect("Note:chart_detail",id)
 
 @login_required
 def chart_delete(request, id):
