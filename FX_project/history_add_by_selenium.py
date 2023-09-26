@@ -60,6 +60,9 @@ def add(html,user,account,tz,HistoryTable):
   for d in dict_list:
     # 設定
     d["state"] = d["state and revocation reason"].split()[0]
+    if d["state"] in ["受付済","待機中"]:
+      print(f"skip because of `{d['state']}`")
+      continue
     if len(d["state and revocation reason"].split()) > 1:
       d["revocation_reason"] = d["state and revocation reason"].split()[-1]
     d.pop("state and revocation reason")
