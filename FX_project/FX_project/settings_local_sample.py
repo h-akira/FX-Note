@@ -7,3 +7,6 @@ SECRET_KEY = 'django-insecure-{}'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+# Permission to sign up
+SIGNUP = False

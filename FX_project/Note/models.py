@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
+# from django.utils import timezone
 
 KIND = (("new","新規"),("settlement","決済"))
 BUY_SELL = (("buy","買"),("sell","売"))

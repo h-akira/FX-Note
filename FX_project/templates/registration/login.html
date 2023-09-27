@@ -1,20 +1,14 @@
 {% extends 'base.html' %}
-
 {% block content %}
+<h3>ログインフォーム</h3>
 <form method="post">
   {% csrf_token %}
   {% for error in form.errors.values %}
     {{ error }}
   {% endfor %}
-  <!-- {{ form.as_p }} -->
-  <div class="mb-3">
-    <label for="Username" class="form-label">User name</label>
-    <input type="text" class="form-control" id="Username"  name="username">
-  </div>
-    <div class="mb-3">
-    <label for="exampleInputPassword1" class="form-label">Password</label>
-    <input type="password" class="form-control" id="exampleInputPassword1" name="password">
-  </div>
-  <button type="submit" class="btn btn-primary">Submit</button>
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">ログイン</button>
+  <a href="{% url 'home:index' %}" class="btn btn-primary">ホームに戻る</a>
+  <a href="{% url 'accounts:signup' %}" class="btn btn-success">アカウント作成フォーム</a>
 </form>
 {% endblock content %}
