@@ -36,11 +36,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Note.apps.NoteConfig',
     'home.apps.HomeConfig',
+    'accounts.apps.AccountsConfig',
     'django_boost',
     'django.contrib.humanize'
 ]
 
-NUMBER_GROUPING = 3
+NUMBER_GROUPING = 3  # カンマの設定
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
