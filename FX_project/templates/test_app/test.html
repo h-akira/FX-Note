@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{% endblock extra_css %}
+
+{% block title %}テスト{% endblock title %}
+{% block content %}
+テスト
+    <div
+      id="container"
+      style="position: absolute; width: 100%; height: 100%"
+    ></div>
+{% endblock content %}
+
+{% block extra_js %}
+<script
+    type="text/javascript"
+    src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"
+></script>
+<script src="{% static 'js/tradingView.js' %}"></script>
+{% endblock extra_js %}
