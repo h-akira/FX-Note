@@ -28,6 +28,14 @@ chart.timeScale().applyOptions({
 
 // Create the Main Series (Candlesticks)
 const mainSeries = chart.addCandlestickSeries();
+// const mainSeries = chart.addCandlestickSeries({
+    // lastValueVisible: false
+// });
+
+mainSeries.applyOptions({
+    priceLineVisible: false,
+    lastValueVisible: false
+});
 
 const sma20Series = chart.addLineSeries({
     color: '#FF0000',

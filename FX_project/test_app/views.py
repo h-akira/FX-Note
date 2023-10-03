@@ -19,18 +19,32 @@ def get_data(request):
     ]
   ) 
   df = lib.chart.resample(df, "15T")
-  df = lib.chart.add_SMA(df, 20, "SMA_20").dropna() 
+  df = chart.add_BBands(
+    df,20,2,0,name={"up":"bb_up_2", "middle":"bb_middle", "down":"bb_down_2"}
+  )
+  df = chart.add_BBands(
+    df,20,3,0,name={"up":"bb_up_3", "middle":"bb_middle", "down":"bb_down_3"}
+  )
+  df = lib.chart.add_SMA(df, 5, "SMA_05")
+  df = lib.chart.add_SMA(df, 20, "SMA_20") 
+  df = lib.chart.add_SMA(df, 60, "SMA_60")
+  df = df.dropna() 
   data = []
   for index, row in df.iterrows():
     data.append(
       {
-        # "time": index.tz_localize(None).isoformat(),
         "time": int(index.tz_localize(None).timestamp()),
         "open": row["Open"],
         "high": row["High"],
         "low": row["Low"],
         "close": row["Close"],
-        "sma20": row["SMA_20"]
+        "sma05": row["SMA_05"],
+        "sma20": row["SMA_20"],
+        "sma60": row["SMA_60"],
+        "bb_up_2": row["bb_up_2"],
+        "bb_up_3": row["bb_up_3"],
+        "bb_down_2": row["bb_down_2"],
+        "bb_down_3": row["bb_down_3"]
       }
     )
   return JsonResponse(data, safe=False)
