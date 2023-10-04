@@ -18,11 +18,11 @@ def get_data(request):
       (datetime.datetime.now()-datetime.timedelta(days=3)).date()
     ]
   ) 
-  df = lib.chart.resample(df, "15T")
-  df = chart.add_BBands(
+  df = lib.chart.resample(df, "5T")
+  df = lib.chart.add_BBands(
     df,20,2,0,name={"up":"bb_up_2", "middle":"bb_middle", "down":"bb_down_2"}
   )
-  df = chart.add_BBands(
+  df = lib.chart.add_BBands(
     df,20,3,0,name={"up":"bb_up_3", "middle":"bb_middle", "down":"bb_down_3"}
   )
   df = lib.chart.add_SMA(df, 5, "SMA_05")
