@@ -9,6 +9,7 @@
 テスト
     <div
       id="container"
+      {# data-fetch-url="/test/get_data/" #}
       style="position: absolute; width: 800px; height: 500px"
     ></div>
 {% endblock content %}
@@ -18,5 +19,12 @@
     type="text/javascript"
     src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"
 ></script>
+<script>
+  {# const FETCH_URL = "{{ fetch_url }}"; #}
+  const FETCH_URL_DATA = "/test/get_data/";
+  {# const FETCH_URL_VLINES = "/test/get_vlines/"; #}
+  const FETCH_URL_HLINES = "/test/get_hlines/";
+  const FETCH_URL_PERIODS = "/test/get_periods/";
+</script>
 <script src="{% static 'js/tradingView.js' %}"></script>
 {% endblock extra_js %}

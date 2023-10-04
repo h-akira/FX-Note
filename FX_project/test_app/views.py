@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+import pandas as pd
 from django.shortcuts import render
 from django.urls import reverse
 from django.http import JsonResponse
@@ -14,8 +15,8 @@ def get_data(request):
     os.path.join(os.path.dirname(__file__), "../data/rate"), 
     pair="USD/JPY",
     date_range=[
-      (datetime.datetime.now()-datetime.timedelta(days=5)).date(),
-      (datetime.datetime.now()-datetime.timedelta(days=3)).date()
+      (datetime.datetime.now()-datetime.timedelta(days=6)).date(),
+      (datetime.datetime.now()-datetime.timedelta(days=4)).date()
     ]
   ) 
   df = lib.chart.resample(df, "5T")
@@ -48,6 +49,37 @@ def get_data(request):
       }
     )
   return JsonResponse(data, safe=False)
+
+def get_hlines(request):
+  lines = [
+    {
+      "color":"red",
+      "price":149.2
+    }
+  ]
+  return JsonResponse(lines, safe=False)
+
+def get_vlines(request):
+  pdt = pd.Timestamp('2023-09-30 01:30:00')
+  lines = [
+    {
+      "color":"red",
+      "time": int(pdt.tz_localize(None).timestamp()),
+    }
+  ]
+  return JsonResponse(lines, safe=False)
+
+def get_periods(request):
+  pdt1 = pd.Timestamp('2023-09-30 01:30:00')
+  pdt2 = pd.Timestamp('2023-09-30 03:30:00')
+  lines = [
+    {
+      "color":"EFEFEF",
+      "from": int(pdt1.tz_localize(None).timestamp()),
+      "to": int(pdt2.tz_localize(None).timestamp()),
+    }
+  ]
+  return JsonResponse(lines, safe=False)
 
 def test(request):
   context = {}

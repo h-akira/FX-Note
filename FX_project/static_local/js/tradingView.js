@@ -1,5 +1,7 @@
+// function fetchChartData() {
+  // fetch('/test/get_data/')
 function fetchChartData() {
-  fetch('/test/get_data/')
+  fetch(FETCH_URL_DATA)
     .then(response => response.json())
     .then(data => {
       mainSeries.setData(data.map(item => ({
@@ -9,7 +11,6 @@ function fetchChartData() {
         low: item.low,
         close: item.close,
       })));
-      // Set the data for the SMA20 Series
       sma05Series.setData(data.map(item => ({
         time: item.time,
         value: item.sma05,
@@ -38,6 +39,20 @@ function fetchChartData() {
         time: item.time,
         value: item.bb_down_3,
       })));
+    });
+  fetch(FETCH_URL_HLINES)
+    .then(response => response.json())
+    .then(priceLines => {
+      for (const line of priceLines) {
+        mainSeries.createPriceLine({
+          price: line.price,
+          color: line.color,
+          lineWidth: 2,
+          lineStyle: LightweightCharts.LineStyle.Solid,
+          axisLabelVisible: true,
+          // title: `Price: ${line.price}`,
+        });
+      }
     });
 }
 
